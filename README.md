@@ -2,7 +2,7 @@
 
 Laboratorio interactivo para el curso de Vibraciones Mecánicas. Cada módulo calcula, anima y grafica un tema del semestre directamente en el navegador, sin instalar nada.
 
-**Abrir el laboratorio:** https://USUARIO.github.io/iem-440-vibraciones/
+**Abrir el laboratorio:** https://ylopezjaime.github.io/iem-440-vibraciones/
 
 ## Contenido
 
