@@ -1,0 +1,1711 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Laboratorio interactivo de Vibraciones Mecánicas (IEM-440): simulación, animación y gráficas para todo el semestre.">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Laboratorio de Vibraciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+window.MJ_PENDING=[];
+window.MathJax={
+  tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},
+  svg:{fontCache:'global'},
+  options:{enableMenu:false},
+  startup:{typeset:false,ready(){MathJax.startup.defaultReady();MathJax.startup.promise.then(()=>{const p=window.MJ_PENDING.splice(0);if(p.length)MathJax.typesetPromise(p).catch(()=>{});});}}
+};
+</script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.js"></script>
+<style>
+/* Layout: lab manual. Sticky top bar; syllabus sidebar (units → modules) on wide screens, a module picker on narrow ones.
+   Each module: controls rail (equations + parameters) beside the live mechanism, readouts and plots. */
+:root{
+  --bg:#EDF1F5; --panel:#FFFFFF; --panel-2:#F4F7FA; --ink:#142030; --muted:#5A6878; --line:#D3DBE4; --grid:#E7ECF2;
+  --accent:#1D5BD6; --accent-ink:#FFFFFF; --accent-soft:#E2EBFD; --s2:#C46F06; --s3:#0B8374; --s4:#8A55C7;
+  --steel:#4C5D71; --mass:#22344B; --mass-ink:#F2F6FA; --hatch:#98A6B5;
+  --ok:#1C7A4B; --ok-bg:#DDF2E6; --warn:#955F00; --warn-bg:#FAEED3; --crit:#B3261E; --crit-bg:#FBE2DF; --info:#1D5BD6; --info-bg:#E2EBFD; --mute-bg:#E8EDF2;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --f-math:"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif;
+  --r:10px; --topbar:62px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D131A; --panel:#141C26; --panel-2:#18212C; --ink:#E2E8EF; --muted:#97A4B4; --line:#283443; --grid:#1C2633;
+    --accent:#7BA5FF; --accent-ink:#0D131A; --accent-soft:#1A2944; --s2:#F2A541; --s3:#3CC3AE; --s4:#B793F0;
+    --steel:#A8B6C6; --mass:#3A5577; --mass-ink:#F2F6FA; --hatch:#56667B;
+    --ok:#5BD08F; --ok-bg:#15301F; --warn:#F2B84B; --warn-bg:#33270F; --crit:#FF8A80; --crit-bg:#3A1A1A; --info:#7BA5FF; --info-bg:#1A2944; --mute-bg:#1F2934;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D131A; --panel:#141C26; --panel-2:#18212C; --ink:#E2E8EF; --muted:#97A4B4; --line:#283443; --grid:#1C2633;
+  --accent:#7BA5FF; --accent-ink:#0D131A; --accent-soft:#1A2944; --s2:#F2A541; --s3:#3CC3AE; --s4:#B793F0;
+  --steel:#A8B6C6; --mass:#3A5577; --mass-ink:#F2F6FA; --hatch:#56667B;
+  --ok:#5BD08F; --ok-bg:#15301F; --warn:#F2B84B; --warn-bg:#33270F; --crit:#FF8A80; --crit-bg:#3A1A1A; --info:#7BA5FF; --info-bg:#1A2944; --mute-bg:#1F2934;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
+
+/* Top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1480px;margin:0 auto;padding-inline:20px;padding-block:10px;display:flex;align-items:center;gap:10px 20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;margin-right:auto}
+.brand svg{flex:none}
+.brand h1{margin:0;font:700 25px/1 var(--f-display);letter-spacing:.01em;text-transform:uppercase}
+.brand p{margin:3px 0 0;font:500 11px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.picker{display:none;align-items:center;gap:6px;flex:1 1 260px;max-width:420px}
+.picker select{flex:1;min-width:0;font:500 14px var(--f-body);padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Shell */
+.shell{max-width:1480px;margin:0 auto;padding-inline:20px;display:grid;grid-template-columns:232px minmax(0,1fr);gap:28px}
+@media (max-width:520px){.shell,.topbar-in{padding-inline:16px}}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--topbar));align-self:start;max-height:calc(100vh - var(--topbar));overflow:auto;padding-block:20px 28px;scrollbar-width:thin}
+.unit{margin-bottom:14px}
+.unit h2{margin:0 0 4px;font:500 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.unit h2 b{color:var(--ink);font-weight:500}
+.navbtn{display:flex;gap:8px;width:100%;text-align:left;appearance:none;border:0;background:none;color:var(--ink);cursor:pointer;
+  font:500 14px/1.3 var(--f-body);padding:6px 8px;border-radius:7px}
+.navbtn .n{font:500 12px/1.5 var(--f-mono);color:var(--muted);min-width:26px}
+.navbtn:hover{background:var(--panel)}
+.navbtn[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.navbtn[aria-current="page"] .n{color:var(--accent)}
+@media (max-width:1100px){.shell{grid-template-columns:minmax(0,1fr)}.side{display:none}.picker{display:flex}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Module */
+.module{padding-block:22px 32px;min-width:0}
+.mod-head{margin-bottom:18px}
+.eyebrow{margin:0 0 4px;font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.mod-head h2{margin:0;font:600 38px/1.05 var(--f-display);text-wrap:balance}
+.lead{margin:8px 0 0;max-width:72ch;color:var(--muted)}
+.mod-grid{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.mod-grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.main{display:grid;gap:16px;min-width:0}
+
+/* Controls */
+.controls{padding:16px;display:grid;gap:12px;min-width:0}
+@media (min-width:861px){.controls{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--topbar) + 14px);max-height:calc(100vh - var(--topbar) - 28px);overflow:auto;scrollbar-width:thin}}
+.eq{background:var(--panel-2);border-radius:8px;padding:6px 10px;overflow-x:auto;min-width:0}
+.eq .tex{font:12.5px/1.5 var(--f-mono);color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0}
+.eq mjx-container{margin:6px 0 !important;font-size:94%;color:var(--ink)}
+.eq mjx-container svg{max-width:none}
+.params{display:grid;gap:10px}
+.pgroup{margin:6px 0 -2px;padding-top:10px;border-top:1px solid var(--line);font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.params .pgroup:first-child{border-top:0;padding-top:0;margin-top:0}
+.param{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 10px}
+.param label{font-size:13.5px;display:flex;gap:6px;align-items:baseline;min-width:0}
+.param .pl{overflow-wrap:anywhere}
+.sym{font-family:var(--f-math);font-style:italic;font-size:15px;color:var(--ink)}
+.sym sub{font-size:.72em}
+.num{display:flex;align-items:center;gap:5px}
+.num input{width:84px;font:13px var(--f-mono);padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.unit-l{font:12px var(--f-mono);color:var(--muted);min-width:44px}
+.param input[type=range]{grid-column:1/-1;width:100%;margin:2px 0 0;accent-color:var(--accent)}
+.param.bool label{font-weight:500;gap:8px;align-items:center}
+.param.bool input{accent-color:var(--accent);width:16px;height:16px}
+.param.sel{grid-template-columns:minmax(0,1fr)}
+.param.sel select{width:100%;font:500 13.5px var(--f-body);padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink)}
+.param.off{display:none}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px}
+.hint{margin:0;font-size:13px;color:var(--muted)}
+.hint b{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-right:5px}
+
+/* Scene */
+.scene-card{overflow:hidden}
+.scene-wrap{height:230px;background-color:var(--panel);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.scene{display:block;width:100%;height:100%}
+.playbar,.datarow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px}
+.playbar{border-top:1px solid var(--line)}
+.datarow{padding:0;justify-content:flex-end}
+.btn{font:600 13px/1 var(--f-body);padding:8px 12px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--muted)}
+.speed{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.speed select{font:13px var(--f-mono);padding:5px 6px;border-radius:6px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink)}
+.tclock{font:500 13px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink);margin-left:auto}
+
+/* Readouts */
+.readouts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(158px,100%),1fr));gap:14px 18px;padding:14px 16px}
+.ro{display:grid;gap:2px;min-width:0;align-content:start}
+.rl{font-size:12px;color:var(--muted);line-height:1.3}
+.rl .sym{font-size:13.5px;color:var(--ink);margin-right:4px}
+.rv{font:500 19px/1.2 var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.rv small{font:12px var(--f-mono);color:var(--muted);margin-left:5px}
+.ro.wide{grid-column:1/-1}
+.ro.wide .rv{font-size:15px}
+.ro-state{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.chip{font:600 12px/1 var(--f-body);letter-spacing:.02em;padding:6px 10px;border-radius:999px}
+.chip[data-tone="ok"]{color:var(--ok);background:var(--ok-bg)}
+.chip[data-tone="warn"]{color:var(--warn);background:var(--warn-bg)}
+.chip[data-tone="crit"]{color:var(--crit);background:var(--crit-bg)}
+.chip[data-tone="info"]{color:var(--info);background:var(--info-bg)}
+.chip[data-tone="mute"]{color:var(--ink);background:var(--mute-bg)}
+.chip-note{font-size:12.5px;color:var(--muted)}
+
+/* Plots */
+.plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:16px}
+.plot{padding:12px 12px 6px;min-width:0}
+.plot.full{grid-column:1/-1}
+.plot-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin-bottom:4px}
+.plot-head h3{margin:0;font:600 14px var(--f-body)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.lg{display:inline-flex;align-items:center;gap:6px}
+.lg i{display:inline-block;width:18px;height:0;border-top:2.5px solid var(--c)}
+.lg i.dash{border-top-style:dashed}
+.lg i.dot{width:8px;height:8px;border:0;border-radius:50%;background:var(--c)}
+.plot-area{position:relative;height:250px}
+.plot-area canvas{position:absolute;inset:0;width:100%;height:100%}
+
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:6px;flex-wrap:wrap}
+.pager button{max-width:100%;text-align:left}
+footer{border-top:1px solid var(--line);padding-block:16px 28px;font-size:12.5px;color:var(--muted)}
+footer p{margin:0;max-width:90ch}
+.copybox{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;max-width:620px;margin:0 auto;padding:12px;display:grid;gap:8px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.copybox textarea{width:100%;height:140px;font:12px var(--f-mono);background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px}
+.copybox div{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+</style>
+</head>
+<body>
+
+
+<header class="topbar" id="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <rect x="1" y="1" width="32" height="32" rx="7" fill="var(--accent)"/>
+        <path d="M4 17 C6.5 5, 9 5, 11 17 S15 27, 17 17 S20.5 11, 22.5 17 S25.5 21, 27 17 S29 15, 30 17" fill="none" stroke="var(--accent-ink)" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <div><h1>Laboratorio de Vibraciones</h1><p>Vibraciones Mecánicas · laboratorio del semestre</p></div>
+    </div>
+    <label class="picker" for="modpick"><span class="vh">Módulo</span><select id="modpick"></select></label>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="side" id="side" aria-label="Contenido del curso"></nav>
+  <div>
+    <main id="modules"></main>
+    <footer>
+      <p>Unidades SI. Las respuestas en el tiempo se integran con Runge–Kutta de 4.º orden (la fricción de Coulomb se resuelve por tramos en forma exacta); amplitudes, fases y frecuencias usan las expresiones analíticas. La animación amplifica los desplazamientos y, cuando la frecuencia real es alta, se reproduce más lenta para que sea visible; los valores numéricos nunca se escalan.</p>
+    </footer>
+  </div>
+</div>
+
+<div class="copybox panel" id="copybox" hidden>
+  <div><span>Copia manual: selecciona el texto y usa Ctrl+C.</span><button class="btn ghost" type="button" id="copyclose">Cerrar</button></div>
+  <textarea id="copytext" readonly aria-label="Datos CSV"></textarea>
+</div>
+
+<script>
+(()=>{
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+
+/*PURE-START*/
+const TAU=2*Math.PI, G=9.81;
+function rk4(f,y0,tf,n,sub){
+  const dim=y0.length,out=[];for(let d=0;d<dim;d++){out.push(new Float64Array(n+1));out[d][0]=y0[d];}
+  const t=new Float64Array(n+1);let y=y0.slice(),tt=0;const h=tf/n/sub;
+  const add=(a,b,s)=>a.map((v,j)=>v+s*b[j]);
+  for(let i=1;i<=n;i++){
+    for(let s=0;s<sub;s++){
+      const k1=f(tt,y),k2=f(tt+h/2,add(y,k1,h/2)),k3=f(tt+h/2,add(y,k2,h/2)),k4=f(tt+h,add(y,k3,h));
+      y=y.map((v,j)=>v+h/6*(k1[j]+2*k2[j]+2*k3[j]+k4[j]));tt+=h;
+    }
+    t[i]=i*tf/n;for(let d=0;d<dim;d++)out[d][i]=y[d];
+  }
+  return {t,y:out};
+}
+const subFor=(wmax,tf,n)=>Math.min(200,Math.max(4,Math.ceil(wmax*(tf/n)/0.25)));
+const mapArr=(a,fn)=>{const o=new Float64Array(a.length);for(let i=0;i<a.length;i++)o[i]=fn(a[i],i);return o;};
+const toMM=a=>mapArr(a,v=>v*1e3);
+const linspace=(a,b,n)=>mapArr(new Float64Array(n),(_,i)=>a+(b-a)*i/(n-1));
+function absMax(...arrs){let m=0;for(const a of arrs)for(let i=0;i<a.length;i++){const q=Math.abs(a[i]);if(q>m&&isFinite(q))m=q;}return m;}
+function interp(a,t,tf){const n=a.length-1;let u=t/tf*n;if(!(u>0))return a[0];if(u>=n)return a[n];const i=Math.floor(u),f=u-i;return a[i]*(1-f)+a[i+1]*f;}
+const deg=r=>r*180/Math.PI;
+const amp=(r,z)=>1/Math.hypot(1-r*r,2*z*r);
+const phs=(r,z)=>Math.atan2(2*z*r,1-r*r);
+const trans=(r,z)=>Math.hypot(1,2*z*r)/Math.hypot(1-r*r,2*z*r);
+function bisect(f,a,b,it=90){let fa=f(a);for(let i=0;i<it;i++){const m=(a+b)/2,fm=f(m);if((fm<0)===(fa<0)){a=m;fa=fm;}else b=m;}return (a+b)/2;}
+function prng(seed){let s=(seed*2654435761)>>>0||1;return ()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;};}
+function gauss(rand){let u=0;while(u===0)u=rand();return Math.sqrt(-2*Math.log(u))*Math.cos(TAU*rand());}
+function jacobiEig(A){
+  const n=A.length,a=A.map(r=>r.slice()),V=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+  for(let sw=0;sw<100;sw++){
+    let off=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)off+=a[i][j]*a[i][j];
+    if(off<1e-22)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
+      if(Math.abs(a[p][q])<1e-300)continue;
+      const th=(a[q][q]-a[p][p])/(2*a[p][q]),t=(th>=0?1:-1)/(Math.abs(th)+Math.sqrt(th*th+1)),c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<n;k++){const kp=a[k][p],kq=a[k][q];a[k][p]=c*kp-s*kq;a[k][q]=s*kp+c*kq;}
+      for(let k=0;k<n;k++){const pk=a[p][k],qk=a[q][k];a[p][k]=c*pk-s*qk;a[q][k]=s*pk+c*qk;}
+      for(let k=0;k<n;k++){const kp=V[k][p],kq=V[k][q];V[k][p]=c*kp-s*kq;V[k][q]=s*kp+c*kq;}
+    }
+  }
+  const idx=[...Array(n).keys()].sort((i,j)=>a[i][i]-a[j][j]);
+  return {vals:idx.map(i=>a[i][i]),vecs:idx.map(i=>V.map(r=>r[i]))};
+}
+/* Coulomb friction, exact piecewise solution: each half-cycle oscillates about ±Δ */
+function coulombSim(x0,v0,wn,D,tf,n){
+  const t=new Float64Array(n+1),x=new Float64Array(n+1),v=new Float64Array(n+1),turns=[];
+  for(let i=0;i<=n;i++)t[i]=i*tf/n;
+  let T=0,X=x0,V=v0,i=0,stopT=null,half=0;
+  while(i<=n){
+    let s;
+    if(Math.abs(V)<1e-12){if(Math.abs(X)<=D*(1+1e-9)){stopT=T;for(;i<=n;i++){x[i]=X;v[i]=0;}break;}s=-Math.sign(X);}
+    else s=Math.sign(V);
+    const xe=-s*D,C=X-xe,S=V/wn,R=Math.hypot(C,S),beta=Math.atan2(C,S);
+    let th=Math.PI/2-beta;if(th>Math.PI+1e-9)th-=Math.PI;if(th<=1e-9)th+=Math.PI;
+    const Tend=T+th/wn;
+    for(;i<=n&&t[i]<=Tend;i++){const q=wn*(t[i]-T);x[i]=xe+C*Math.cos(q)+S*Math.sin(q);v[i]=wn*R*Math.cos(q+beta);}
+    X=xe+C*Math.cos(th)+S*Math.sin(th);V=0;T=Tend;half++;turns.push({t:T,x:X});
+    if(half>20000)break;
+  }
+  return {t,x,v,stopT,turns};
+}
+/* Fourier coefficients of periodic waveforms, u = t/T in [0,1) */
+const WAVES={
+  cuadrada:{n:'Cuadrada',f:(u,A)=>u<0.5?A:-A,c0:()=>0,a:()=>0,b:(n,A)=>n%2?4*A/(n*Math.PI):0},
+  triangular:{n:'Triangular',f:(u,A)=>u<0.25?4*A*u:u<0.75?A*(2-4*u):A*(4*u-4),c0:()=>0,a:()=>0,b:(n,A)=>n%2?8*A/(n*n*Math.PI*Math.PI)*((n-1)/2%2?-1:1):0},
+  diente:{n:'Diente de sierra',f:(u,A)=>A*(2*u-1),c0:()=>0,a:()=>0,b:(n,A)=>-2*A/(n*Math.PI)},
+  media:{n:'Senoidal rectificada (media onda)',f:(u,A)=>u<0.5?A*Math.sin(TAU*u):0,c0:A=>A/Math.PI,a:(n,A)=>n%2?0:-2*A/(Math.PI*(n*n-1)),b:(n,A)=>n===1?A/2:0},
+  completa:{n:'Senoidal rectificada (onda completa)',f:(u,A)=>A*Math.abs(Math.sin(TAU*u)),c0:A=>2*A/Math.PI,a:(n,A)=>n%2?0:-4*A/(Math.PI*(n*n-1)),b:()=>0},
+  pulsos:{n:'Tren de pulsos',f:(u,A,d)=>(u<d/2||u>1-d/2)?A:0,c0:(A,d)=>A*d,a:(n,A,d)=>2*A*Math.sin(n*Math.PI*d)/(n*Math.PI),b:()=>0},
+};
+const waveOpts=Object.entries(WAVES).map(([k,w])=>[k,w.n]);
+function fourier(key,A,d,N){
+  const W=WAVES[key],c0=W.c0(A,d),a=[0],b=[0];
+  for(let n=1;n<=N;n++){a.push(W.a(n,A,d));b.push(W.b(n,A,d));}
+  return {W,c0,a,b,f:u=>W.f(((u%1)+1)%1,A,d)};
+}
+/* Euler–Bernoulli beam: βL roots and mode shapes */
+const BEAM={
+  apoyada:{n:'Simplemente apoyada',ends:['pin','pin'],bl:j=>j*Math.PI,phi:(bx)=>Math.sin(bx)},
+  voladizo:{n:'Voladizo (empotrada–libre)',ends:['wall','free'],bl:j=>[1.87510407,4.69409113,7.85475744,10.99554073,14.13716839][j-1],
+    phi:(bx,bl)=>{const s=(Math.cosh(bl)+Math.cos(bl))/(Math.sinh(bl)+Math.sin(bl));return Math.cosh(bx)-Math.cos(bx)-s*(Math.sinh(bx)-Math.sin(bx));}},
+  empotrada:{n:'Empotrada–empotrada',ends:['wall','wall'],bl:j=>[4.73004074,7.85320462,10.99560784,14.13716549,17.27875966][j-1],
+    phi:(bx,bl)=>{const s=(Math.cosh(bl)-Math.cos(bl))/(Math.sinh(bl)-Math.sin(bl));return Math.cosh(bx)-Math.cos(bx)-s*(Math.sinh(bx)-Math.sin(bx));}},
+  empapoyada:{n:'Empotrada–apoyada',ends:['wall','pin'],bl:j=>[3.92660231,7.06858275,10.21017612,13.35176878,16.49336143][j-1],
+    phi:(bx,bl)=>{const s=(Math.cosh(bl)-Math.cos(bl))/(Math.sinh(bl)-Math.sin(bl));return Math.cosh(bx)-Math.cos(bx)-s*(Math.sinh(bx)-Math.sin(bx));}},
+  librelibre:{n:'Libre–libre',ends:['free','free'],bl:j=>[4.73004074,7.85320462,10.99560784,14.13716549,17.27875966][j-1],
+    phi:(bx,bl)=>{const s=(Math.cosh(bl)-Math.cos(bl))/(Math.sinh(bl)-Math.sin(bl));return Math.cosh(bx)+Math.cos(bx)-s*(Math.sinh(bx)+Math.sin(bx));}},
+};
+const ROD={
+  fl:{n:'Fijo–libre',ends:['wall','free'],k:j=>(2*j-1)*Math.PI/2,phi:kx=>Math.sin(kx)},
+  ff:{n:'Fijo–fijo',ends:['wall','wall'],k:j=>j*Math.PI,phi:kx=>Math.sin(kx)},
+  ll:{n:'Libre–libre',ends:['free','free'],k:j=>j*Math.PI,phi:kx=>Math.cos(kx)},
+};
+function peakNormalize(a){const m=absMax(a)||1;let s=1;for(let i=0;i<a.length;i++)if(Math.abs(a[i])>0.5*m){s=Math.sign(a[i]);break;}return mapArr(a,v=>v/m*s);}
+function countNodes(a){let c=0,prev=0;const tol=1e-3*absMax(a);for(let i=1;i<a.length-1;i++){const v=a[i];if(Math.abs(v)<tol)continue;const s=Math.sign(v);if(prev&&s!==prev)c++;prev=s;}return c;}
+/* Peak extraction from a noisy decay: one maximum between consecutive upward zero crossings of a smoothed copy */
+function decayPeaks(t,x,win){
+  const n=x.length,sm=new Float64Array(n);
+  for(let i=0;i<n;i++){let s=0,c=0;for(let j=Math.max(0,i-win);j<=Math.min(n-1,i+win);j++){s+=x[j];c++;}sm[i]=s/c;}
+  const cuts=[0];for(let i=1;i<n;i++)if(sm[i-1]<0&&sm[i]>=0)cuts.push(i);cuts.push(n);
+  const pk=[];for(let c=0;c<cuts.length-1;c++){let bi=-1,bv=-Infinity;for(let i=cuts[c];i<cuts[c+1];i++)if(x[i]>bv){bv=x[i];bi=i;}if(bi>=0&&bv>0)pk.push({t:t[bi],x:bv});}
+  return pk;
+}
+function linfit(xs,ys){const n=xs.length;let sx=0,sy=0,sxx=0,sxy=0;for(let i=0;i<n;i++){sx+=xs[i];sy+=ys[i];sxx+=xs[i]*xs[i];sxy+=xs[i]*ys[i];}const m=(n*sxy-sx*sy)/(n*sxx-sx*sx);return {m,b:(sy-m*sx)/n};}
+function pulseF(type,F0,t0){
+  switch(type){
+    case 'esc':return t=>t>=0?F0:0;
+    case 'rect':return t=>(t>=0&&t<t0)?F0:0;
+    case 'seno':return t=>(t>=0&&t<t0)?F0*Math.sin(Math.PI*t/t0):0;
+    case 'tri':return t=>(t<0||t>=t0)?0:(t<t0/2?2*F0*t/t0:2*F0*(1-t/t0));
+    case 'rampa':return t=>t<0?0:(t<t0?F0*t/t0:F0);
+    default:return ()=>0;
+  }
+}
+/*PURE-END*/
+
+/* ---------- theme ---------- */
+const TOK=['bg','panel','panel-2','ink','muted','line','grid','accent','accent-ink','s2','s3','s4','steel','mass','mass-ink','hatch','ok','crit'];
+let THEME={};
+function readTheme(){const cs=getComputedStyle(document.documentElement);TOK.forEach(k=>THEME[k]=cs.getPropertyValue('--'+k).trim());}
+const col=n=>THEME[n]||n;
+
+const SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':''};
+function fmt(v,sig=4){
+  if(v===Infinity||v===-Infinity)return '∞';
+  if(v==null||Number.isNaN(v))return '—';
+  if(v===0)return '0';
+  const a=Math.abs(v);
+  if(a>=1e6||a<1e-3){const [m,e]=v.toExponential(2).split('e');return m+'×10'+e.split('').map(c=>SUP[c]??c).join('');}
+  return String(Number(v.toPrecision(sig)));
+}
+
+/* ---------- plotting ---------- */
+function niceTicks(min,max,count){
+  if(!(max>min)){min-=1;max+=1;}
+  const raw=(max-min)/Math.max(2,count),mag=Math.pow(10,Math.floor(Math.log10(raw))),e=raw/mag;
+  const step=(e>=7.5?10:e>=3.5?5:e>=1.5?2:1)*mag;
+  const out=[];for(let v=Math.ceil(min/step-1e-9)*step;v<=max+step*1e-9;v+=step)out.push(Math.abs(v)<step*1e-9?0:v);
+  return {ticks:out,step};
+}
+function decimals(step){let d=0;while(d<6&&Math.abs(Math.round(step*10**d)-step*10**d)>1e-6*10**d)d++;return d;}
+function extent(arrs){let lo=Infinity,hi=-Infinity;for(const a of arrs)for(let i=0;i<a.length;i++){const v=a[i];if(isFinite(v)){if(v<lo)lo=v;if(v>hi)hi=v;}}return [lo,hi];}
+const MONO='11px "IBM Plex Mono", ui-monospace, monospace';
+
+class Plot{
+  constructor(host,o){
+    this.o=o;host.className='plot panel'+(o.full?' full':'');
+    host.innerHTML=`<div class="plot-head"><h3>${o.title}</h3><div class="legend"></div></div><div class="plot-area"><canvas></canvas><canvas></canvas></div>`;
+    [this.base,this.over]=host.querySelectorAll('canvas');
+    this.leg=$('.legend',host);this.area=$('.plot-area',host);this.base.setAttribute('role','img');this.base.setAttribute('aria-label',o.title);
+    new ResizeObserver(()=>{this.draw();if(this.last)this.cursor(this.last);}).observe(this.area);
+  }
+  set(d){
+    this.d=d;
+    this.leg.innerHTML=(d.series||[]).filter(s=>s.label).map(s=>`<span class="lg"><i class="${s.stem||s.dots?'dot':s.dash?'dash':''}" style="--c:var(--${s.color})"></i>${s.label}</span>`).join('');
+    this.draw();
+  }
+  draw(){
+    const d=this.d;if(!d)return;
+    const r=this.area.getBoundingClientRect(),w=Math.round(r.width),h=Math.round(r.height);if(w<40||h<40){this.map=null;return;}
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    for(const c of [this.base,this.over]){c.width=w*dpr;c.height=h*dpr;}
+    const ctx=this.base.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+    if(d.empty){ctx.fillStyle=col('muted');ctx.font='13px "IBM Plex Sans", system-ui, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      const words=d.empty.split(' ');let line='';const lines=[];for(const wd of words){if(ctx.measureText(line+wd).width>w-40&&line){lines.push(line);line='';}line+=wd+' ';}lines.push(line);
+      lines.forEach((l,i)=>ctx.fillText(l.trim(),w/2,h/2+(i-(lines.length-1)/2)*18));this.map=null;return;}
+    const series=d.series||[];
+    const P={l:60,r:14,t:10,b:40},pw=w-P.l-P.r,ph=h-P.t-P.b,lg=!!this.o.yLog;
+    let [x0,x1]=d.xRange||extent(series.map(s=>s.x));if(!(x1>x0)){x0-=1;x1+=1;}
+    let y0,y1;
+    if(d.yRange)[y0,y1]=d.yRange;
+    else if(lg){
+      let hi=-Infinity,lo=Infinity;for(const s of series)for(let i=0;i<s.y.length;i++){const v=s.y[i];if(v>0&&isFinite(v)){hi=Math.max(hi,v);lo=Math.min(lo,v);}}
+      if(!isFinite(hi)){hi=1;lo=0.1;}lo=Math.max(lo,hi/1e5);
+      y0=Math.pow(10,Math.floor(Math.log10(lo)));y1=Math.pow(10,Math.ceil(Math.log10(hi)));if(y1<=y0)y1=y0*10;
+    } else {
+      [y0,y1]=extent(series.map(s=>s.y));
+      if(d.yZero){y0=Math.min(0,y0);y1=Math.max(0,y1);}
+      if(!(y1>y0)){y0-=1;y1+=1;}
+      const p=(y1-y0)*0.08;if(!(d.yZero&&y0===0))y0-=p;y1+=p;
+    }
+    const ly0=lg?Math.log10(y0):0,ly1=lg?Math.log10(y1):0;
+    const X=v=>P.l+(v-x0)/(x1-x0)*pw;
+    const Y=lg?v=>P.t+(1-(Math.log10(v)-ly0)/(ly1-ly0))*ph:v=>P.t+(1-(v-y0)/(y1-y0))*ph;
+    this.map={X,Y,P,pw,ph,w,h};
+    ctx.font=MONO;ctx.lineWidth=1;
+    const xt=d.xTicks?{ticks:d.xTicks,step:1}:niceTicks(x0,x1,Math.max(3,Math.floor(pw/80)));
+    const xd=decimals(xt.step);
+    ctx.textAlign='center';ctx.textBaseline='top';
+    for(const v of xt.ticks){const px=X(v);if(px<P.l-1||px>P.l+pw+1)continue;ctx.strokeStyle=col('grid');ctx.beginPath();ctx.moveTo(px,P.t);ctx.lineTo(px,P.t+ph);ctx.stroke();
+      ctx.fillStyle=col('muted');ctx.fillText(d.xTickFmt?d.xTickFmt(v):v.toFixed(xd),px,P.t+ph+6);}
+    ctx.textAlign='right';ctx.textBaseline='middle';
+    let yticks,yd=0;
+    if(lg){yticks=[];for(let k=Math.round(ly0);k<=Math.round(ly1);k++)yticks.push(Math.pow(10,k));}
+    else if(d.yTicks){yticks=d.yTicks;yd=decimals(d.yTicks.length>1?Math.abs(d.yTicks[1]-d.yTicks[0]):1);}
+    else{const nt=niceTicks(y0,y1,Math.max(3,Math.floor(ph/42)));yticks=nt.ticks;yd=decimals(nt.step);}
+    for(const v of yticks){const py=Y(v);if(py<P.t-1||py>P.t+ph+1)continue;ctx.strokeStyle=col('grid');ctx.beginPath();ctx.moveTo(P.l,py);ctx.lineTo(P.l+pw,py);ctx.stroke();
+      ctx.fillStyle=col('muted');
+      let lab;if(lg){const k=Math.round(Math.log10(v));lab=(k>=-3&&k<=4)?String(Number(v.toPrecision(1))):'1e'+k;}else lab=v.toFixed(yd);
+      ctx.fillText(lab,P.l-6,py);}
+    if(!lg&&y0<0&&y1>0){ctx.strokeStyle=col('line');ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(P.l,Y(0));ctx.lineTo(P.l+pw,Y(0));ctx.stroke();}
+    ctx.strokeStyle=col('line');ctx.lineWidth=1;ctx.strokeRect(P.l+.5,P.t+.5,pw-1,ph-1);
+    ctx.fillStyle=col('muted');ctx.font='12px "IBM Plex Sans", system-ui, sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText(this.o.xLabel,P.l+pw/2,h-4);
+    ctx.save();ctx.translate(13,P.t+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline='middle';ctx.fillText(this.o.yLabel,0,0);ctx.restore();
+    ctx.save();ctx.beginPath();ctx.rect(P.l,P.t,pw,ph);ctx.clip();
+    for(const B of d.bands||[]){ctx.fillStyle=col(B.color||'accent');ctx.globalAlpha=B.alpha??0.08;
+      if(B.y!=null){const a=Y(B.y[1]),b=Y(B.y[0]);ctx.fillRect(P.l,a,pw,b-a);}else{const a=X(B.x[0]),b=X(B.x[1]);ctx.fillRect(a,P.t,b-a,ph);}ctx.globalAlpha=1;}
+    for(const L of d.vlines||[]){if(!isFinite(L.x))continue;const px=X(L.x);ctx.strokeStyle=col(L.color||'muted');ctx.setLineDash([4,4]);ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(px,P.t);ctx.lineTo(px,P.t+ph);ctx.stroke();ctx.setLineDash([]);
+      if(L.label){ctx.fillStyle=col(L.color||'muted');ctx.font=MONO;const right=px>P.l+pw-60;ctx.textAlign=right?'right':'left';ctx.textBaseline='top';ctx.fillText(L.label,px+(right?-4:4),P.t+4+(L.row||0)*14);}}
+    for(const L of d.hlines||[]){if(!isFinite(L.y)||(lg&&L.y<=0))continue;const py=Y(L.y);ctx.strokeStyle=col(L.color||'muted');ctx.setLineDash([4,4]);ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(P.l,py);ctx.lineTo(P.l+pw,py);ctx.stroke();ctx.setLineDash([]);
+      if(L.label){ctx.fillStyle=col(L.color||'muted');ctx.font=MONO;ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(L.label,P.l+pw-4,py-3);}}
+    for(const s of series){
+      ctx.strokeStyle=col(s.color);ctx.fillStyle=col(s.color);ctx.lineWidth=s.width||1.8;ctx.globalAlpha=s.alpha??1;ctx.setLineDash(s.dash?[6,5]:[]);ctx.lineJoin='round';
+      if(s.stem){
+        const base=lg?y0:Math.max(y0,Math.min(y1,0));
+        for(let i=0;i<s.x.length;i++){const xv=s.x[i],yv=s.y[i];if(!isFinite(xv)||!isFinite(yv)||(lg&&yv<=0))continue;const px=X(xv),py=Y(yv);
+          ctx.beginPath();ctx.moveTo(px,Y(base));ctx.lineTo(px,py);ctx.stroke();ctx.beginPath();ctx.arc(px,py,s.r||3.2,0,TAU);ctx.fill();}
+      } else if(s.dots){
+        for(let i=0;i<s.x.length;i++){const xv=s.x[i],yv=s.y[i];if(!isFinite(xv)||!isFinite(yv))continue;ctx.beginPath();ctx.arc(X(xv),Y(yv),s.r||3.2,0,TAU);ctx.fill();}
+      } else {
+        ctx.beginPath();let pen=false;
+        for(let i=0;i<s.x.length;i++){const xv=s.x[i],yv=s.y[i];
+          if(!isFinite(xv)||!isFinite(yv)||(lg&&yv<=0)){pen=false;continue;}
+          const px=X(xv),py=Math.max(-1e4,Math.min(1e4,Y(yv)));
+          if(pen)ctx.lineTo(px,py);else{ctx.moveTo(px,py);pen=true;}}
+        ctx.stroke();
+      }
+      ctx.globalAlpha=1;ctx.setLineDash([]);
+    }
+    ctx.restore();
+    for(const m of d.markers||[]){if(!isFinite(m.x)||!isFinite(m.y)||(lg&&m.y<=0))continue;const px=X(m.x),py=Y(m.y);
+      if(px<P.l-2||px>P.l+pw+2||py<P.t-2||py>P.t+ph+2)continue;
+      ctx.fillStyle=col(m.color||'accent');ctx.strokeStyle=col('panel');ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,m.r||5,0,TAU);ctx.fill();ctx.stroke();
+      if(m.label){ctx.fillStyle=col('ink');ctx.font=MONO;ctx.textBaseline='bottom';const right=px>P.l+pw*0.72;
+        ctx.textAlign=right?'right':'left';ctx.fillText(m.label,px+(right?-8:8),py-6);}}
+  }
+  cursor(c){
+    this.last=c;const m=this.map;const ctx=this.over.getContext('2d');
+    const dpr=Math.min(2,window.devicePixelRatio||1);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,this.over.width,this.over.height);
+    if(!m||!c)return;
+    if(c.x!=null){const px=m.X(c.x);if(px>=m.P.l&&px<=m.P.l+m.pw){ctx.strokeStyle=col('ink');ctx.globalAlpha=.35;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,m.P.t);ctx.lineTo(px,m.P.t+m.ph);ctx.stroke();ctx.globalAlpha=1;}}
+    for(const p of c.pts||[]){if(!isFinite(p.y)||!isFinite(p.x))continue;const px=m.X(p.x),py=m.Y(p.y);
+      if(py<m.P.t||py>m.P.t+m.ph||px<m.P.l||px>m.P.l+m.pw)continue;
+      ctx.fillStyle=col(p.color||'accent');ctx.strokeStyle=col('panel');ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,4.5,0,TAU);ctx.fill();ctx.stroke();}
+  }
+}
+
+/* ---------- mechanism drawing ---------- */
+const MATHF='"STIX Two Math","Cambria Math","Times New Roman",Georgia,serif';
+function sceneCtx(cv){
+  const r=cv.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==w*dpr||cv.height!==h*dpr){cv.width=w*dpr;cv.height=h*dpr;}
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);return {ctx,w,h};
+}
+function ground(ctx,x0,x1,y){ctx.strokeStyle=col('hatch');ctx.lineWidth=1;ctx.beginPath();for(let x=x0+8;x<x1;x+=9){ctx.moveTo(x,y);ctx.lineTo(x-7,y+8);}ctx.stroke();
+  ctx.strokeStyle=col('steel');ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();}
+function ceiling(ctx,x0,x1,y){ctx.strokeStyle=col('hatch');ctx.lineWidth=1;ctx.beginPath();for(let x=x0+8;x<x1;x+=9){ctx.moveTo(x,y);ctx.lineTo(x-7,y-8);}ctx.stroke();
+  ctx.strokeStyle=col('steel');ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();}
+function wall(ctx,x,y0,y1,side){ctx.strokeStyle=col('hatch');ctx.lineWidth=1;ctx.beginPath();for(let y=y0+6;y<y1;y+=9){ctx.moveTo(x,y);ctx.lineTo(x+side*8,y-7);}ctx.stroke();
+  ctx.strokeStyle=col('steel');ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();}
+function pin(ctx,x,y){ctx.strokeStyle=col('steel');ctx.fillStyle=col('panel');ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-9,y+14);ctx.lineTo(x+9,y+14);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.strokeStyle=col('hatch');ctx.lineWidth=1;ctx.beginPath();for(let xx=x-10;xx<x+12;xx+=5){ctx.moveTo(xx,y+14);ctx.lineTo(xx-4,y+19);}ctx.stroke();}
+function spring(ctx,xa,xb,y,amp=8,coils=7){
+  const L=xb-xa,lead=Math.min(10,Math.max(2,Math.abs(L)*0.12))*Math.sign(L||1),s0=xa+lead,s1=xb-lead,N=coils*2;
+  ctx.strokeStyle=col('steel');ctx.lineWidth=1.7;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(xa,y);ctx.lineTo(s0,y);
+  for(let i=1;i<=N;i++)ctx.lineTo(s0+(s1-s0)*(i-0.5)/N,y+(i%2?-amp:amp));
+  ctx.lineTo(s1,y);ctx.lineTo(xb,y);ctx.stroke();
+}
+function springV(ctx,x,ya,yb,amp=7,coils=6){
+  const L=yb-ya,lead=Math.min(8,Math.abs(L)*0.12)*Math.sign(L||1),s0=ya+lead,s1=yb-lead,N=coils*2;
+  ctx.strokeStyle=col('steel');ctx.lineWidth=1.7;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(x,ya);ctx.lineTo(x,s0);
+  for(let i=1;i<=N;i++)ctx.lineTo(x+(i%2?-amp:amp),s0+(s1-s0)*(i-0.5)/N);
+  ctx.lineTo(x,s1);ctx.lineTo(x,yb);ctx.stroke();
+}
+function damper(ctx,xa,xb,y,rest){
+  const hh=7,c0=xa+6,c1=c0+rest*0.5;
+  let xp=xb-rest*0.42;xp=Math.max(c0+4,Math.min(c1-2,xp));
+  ctx.strokeStyle=col('steel');ctx.lineWidth=1.7;ctx.beginPath();
+  ctx.moveTo(xa,y);ctx.lineTo(c0,y);
+  ctx.moveTo(c1,y-hh);ctx.lineTo(c0,y-hh);ctx.lineTo(c0,y+hh);ctx.lineTo(c1,y+hh);
+  ctx.moveTo(xp,y-hh+2.5);ctx.lineTo(xp,y+hh-2.5);ctx.moveTo(xp,y);ctx.lineTo(xb,y);ctx.stroke();
+}
+function damperV(ctx,x,yTop,yBot,rest){
+  const hw=7,c0=yBot-6,c1=c0-rest*0.5;
+  let yp=yTop+rest*0.42;yp=Math.min(c0-4,Math.max(c1+2,yp));
+  ctx.strokeStyle=col('steel');ctx.lineWidth=1.7;ctx.beginPath();
+  ctx.moveTo(x,yBot);ctx.lineTo(x,c0);
+  ctx.moveTo(x-hw,c1);ctx.lineTo(x-hw,c0);ctx.lineTo(x+hw,c0);ctx.lineTo(x+hw,c1);
+  ctx.moveTo(x-hw+2.5,yp);ctx.lineTo(x+hw-2.5,yp);ctx.moveTo(x,yp);ctx.lineTo(x,yTop);ctx.stroke();
+}
+function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function block(ctx,x,y,w,h,label,o={}){
+  if(o.wheels!==false&&o.gy!=null){ctx.fillStyle=col('steel');for(const wx of [x+w*0.25,x+w*0.75]){ctx.beginPath();ctx.arc(wx,o.gy-3,3,0,TAU);ctx.fill();}}
+  rrect(ctx,x,y,w,h,5);ctx.fillStyle=col(o.fill||'mass');ctx.fill();
+  if(label){ctx.fillStyle=col('mass-ink');ctx.textAlign=o.corner?'left':'center';ctx.textBaseline='middle';
+    ctx.font=`italic 600 ${o.size||(o.corner?13:17)}px ${MATHF}`;
+    if(o.corner)ctx.fillText(label,x+7,y+12);else ctx.fillText(label,x+w/2,y+h/2);}
+}
+function arrow(ctx,x0,y,x1,color,label){
+  const L=x1-x0;if(Math.abs(L)<3)return;const dir=Math.sign(L),hd=Math.min(9,Math.abs(L)*0.6);
+  ctx.strokeStyle=col(color);ctx.fillStyle=col(color);ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1-dir*hd*0.6,y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x1-dir*hd,y-5);ctx.lineTo(x1-dir*hd,y+5);ctx.closePath();ctx.fill();
+  if(label){ctx.font=`italic 13px ${MATHF}`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(label,(x0+x1)/2,y-7);}
+}
+function arrowV(ctx,x,y0,y1,color,label){
+  const L=y1-y0;if(Math.abs(L)<3)return;const dir=Math.sign(L),hd=Math.min(9,Math.abs(L)*0.6);
+  ctx.strokeStyle=col(color);ctx.fillStyle=col(color);ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1-dir*hd*0.6);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,y1);ctx.lineTo(x-5,y1-dir*hd);ctx.lineTo(x+5,y1-dir*hd);ctx.closePath();ctx.fill();
+  if(label){ctx.font=`italic 13px ${MATHF}`;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(label,x+8,(y0+y1)/2);}
+}
+function vec(ctx,x0,y0,x1,y1,color,w=2.2){
+  const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);ctx.strokeStyle=col(color);ctx.fillStyle=col(color);ctx.lineWidth=w;
+  ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();if(L<6)return;
+  const ux=dx/L,uy=dy/L,hd=Math.min(9,L*0.4);
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x1-ux*hd-uy*4.5,y1-uy*hd+ux*4.5);ctx.lineTo(x1-ux*hd+uy*4.5,y1-uy*hd-ux*4.5);ctx.closePath();ctx.fill();
+}
+function eqLine(ctx,x,y0,y1){ctx.strokeStyle=col('muted');ctx.globalAlpha=.6;ctx.setLineDash([3,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+function eqLineH(ctx,x0,x1,y){ctx.strokeStyle=col('muted');ctx.globalAlpha=.6;ctx.setLineDash([3,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+function txt(ctx,x,y,s,o={}){ctx.fillStyle=col(o.color||'ink');ctx.font=o.font||'12px "IBM Plex Mono", monospace';ctx.textAlign=o.align||'center';ctx.textBaseline=o.base||'alphabetic';ctx.fillText(s,x,y);}
+const NOTE='11px "IBM Plex Mono", monospace';
+const visF=f=>f<=1.6?f:1;
+
+function drawSDOF(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const gy=h-36,mw=Math.min(100,Math.max(64,w*0.18)),mh=66,top=gy-6-mh,wallX=24;
+  const baseW=o.base?18:0;
+  const xL0=Math.round(w*0.54-mw/2),rest=xL0-(wallX+baseW);
+  const maxPx=Math.min(72,rest*0.42),s=o.maxmm>1e-12?maxPx/o.maxmm:0;
+  const xp=o.xmm*s,bp=(o.ymm||0)*s;
+  ground(ctx,12,w-12,gy);
+  eqLine(ctx,xL0+mw/2,top-16,gy);
+  let anchor;
+  if(o.base){
+    const bx=wallX+bp;
+    ctx.fillStyle=col('panel-2');ctx.strokeStyle=col('steel');ctx.lineWidth=1.6;rrect(ctx,bx,top-6,baseW,mh+6,3);ctx.fill();ctx.stroke();
+    ctx.fillStyle=col('steel');for(const wx of [bx+4,bx+baseW-4]){ctx.beginPath();ctx.arc(wx,gy-3,3,0,TAU);ctx.fill();}
+    arrow(ctx,bx+baseW/2,top-18,bx+baseW/2+Math.sign(o.yv||1)*22,'s3','y(t)');
+    anchor=bx+baseW;
+  } else {wall(ctx,wallX,top-12,gy,-1);anchor=wallX;}
+  const mL=xL0+xp;
+  if(o.friction){ctx.strokeStyle=col('hatch');ctx.lineWidth=1;ctx.beginPath();for(let x=mL-14;x<mL+mw+14;x+=5){ctx.moveTo(x,gy);ctx.lineTo(x+3,gy-4);}ctx.stroke();}
+  if(o.damper){spring(ctx,anchor,mL,top+mh*0.3);damper(ctx,anchor,mL,top+mh*0.74,rest);}
+  else spring(ctx,anchor,mL,top+mh/2);
+  block(ctx,mL,top,mw,mh,o.label||'m',{gy,wheels:!o.friction,corner:!!o.rotor});
+  if(o.friction&&o.fdir)arrow(ctx,mL+mw/2,gy-10,mL+mw/2-o.fdir*34,'s4','μmg');
+  if(o.rotor){
+    const cx=mL+mw/2,cy=top+mh/2+4,R=mh*0.28,th=o.rotor.theta;
+    ctx.strokeStyle=col('mass-ink');ctx.globalAlpha=.55;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.stroke();ctx.globalAlpha=1;
+    const px=cx+R*Math.sin(th),py=cy-R*Math.cos(th);
+    ctx.strokeStyle=col('mass-ink');ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.stroke();
+    ctx.fillStyle=col('s2');ctx.beginPath();ctx.arc(px,py,5,0,TAU);ctx.fill();
+  }
+  if(o.force!=null)arrow(ctx,mL+mw+6,top+mh/2,mL+mw+6+o.force*54,'s2','F(t)');
+  txt(ctx,mL+mw/2,gy+26,`x = ${o.xmm.toFixed(2)} mm`);
+  if(o.base)txt(ctx,wallX+bp+baseW/2,gy+26,`y = ${o.ymm.toFixed(1)}`);
+  if(o.note)txt(ctx,12,18,o.note,{align:'left',color:'muted',font:NOTE});
+}
+function draw2DOF(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const gy=h-36,mw=Math.min(84,Math.max(52,w*0.14)),mh=62,top=gy-6-mh,wL=24,wR=w-24;
+  const L1=Math.round(w*0.35-mw/2),L2=Math.round(w*0.66-mw/2);
+  const gap=L2-(L1+mw),r1=L1-wL,r3=wR-(L2+mw);
+  let maxPx=Math.min(54,gap*0.34,r1*0.36);if(o.k3>0)maxPx=Math.min(maxPx,r3*0.36);
+  const s=o.maxmm>1e-12?maxPx/o.maxmm:0,p1=o.x1*s,p2=o.x2*s;
+  ground(ctx,12,w-12,gy);
+  eqLine(ctx,L1+mw/2,top-16,gy);eqLine(ctx,L2+mw/2,top-16,gy);
+  const ys=top+mh*0.3,yd=top+mh*0.74;
+  const link=(xa,xb,k,c,rest)=>{if(k>0)spring(ctx,xa,xb,c>0?ys:top+mh/2,7,6);if(c>0)damper(ctx,xa,xb,k>0?yd:top+mh/2,rest);};
+  if(o.k1>0||o.c1>0){wall(ctx,wL,top-12,gy,-1);link(wL,L1+p1,o.k1,o.c1,r1);}
+  link(L1+p1+mw,L2+p2,o.k2,o.c2,gap);
+  if(o.k3>0){wall(ctx,wR,top-12,gy,1);link(L2+p2+mw,wR,o.k3,0,r3);}
+  const lab=o.labels||['m₁','m₂'],vl=o.vl||['x₁','x₂'];
+  block(ctx,L1+p1,top,mw,mh,lab[0],{gy});block(ctx,L2+p2,top,mw,mh,lab[1],{gy,fill:o.fill2});
+  if(o.force!=null)arrow(ctx,L1+p1+mw/2,top-14,L1+p1+mw/2+o.force*40,'s2','F(t)');
+  txt(ctx,L1+p1+mw/2,gy+26,`${vl[0]} = ${o.x1.toFixed(2)}`);txt(ctx,L2+p2+mw/2,gy+26,`${vl[1]} = ${o.x2.toFixed(2)} mm`);
+}
+function drawChain(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const n=o.n,gy=h-36,mh=40,top=gy-6-mh,xL=24,xR=w-24;
+  const lw=o.cc!=='ll',rw=o.cc==='ff';
+  const pitch=(xR-xL)/(n+(rw?1:0.7)),mw=Math.min(46,pitch*0.46),A=Math.min(pitch*0.26,30);
+  const off=lw?0:-pitch*0.35;
+  ground(ctx,12,w-12,gy);
+  if(lw)wall(ctx,xL,top-10,gy,-1);if(rw)wall(ctx,xR,top-10,gy,1);
+  const cx=[];for(let i=0;i<n;i++)cx.push(xL+off+pitch*(i+1)+o.disp[i]*A);
+  for(let i=0;i<n;i++)eqLine(ctx,xL+off+pitch*(i+1),top-12,gy);
+  if(lw)spring(ctx,xL,cx[0]-mw/2,top+mh/2,6,5);
+  for(let i=0;i<n-1;i++)spring(ctx,cx[i]+mw/2,cx[i+1]-mw/2,top+mh/2,6,5);
+  if(rw)spring(ctx,cx[n-1]+mw/2,xR,top+mh/2,6,5);
+  for(let i=0;i<n;i++)block(ctx,cx[i]-mw/2,top,mw,mh,String(i+1),{gy,size:14,fill:i===n-1&&o.heavyLast?'s4':'mass'});
+  if(o.note)txt(ctx,12,18,o.note,{align:'left',color:'muted',font:NOTE});
+}
+function drawPhasors(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const R=Math.min(h*0.4,w*0.2),cx=22+R,cy=h/2,s=R/(o.maxAmp||1);
+  ctx.strokeStyle=col('line');ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R,0,TAU);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-R-8,cy);ctx.lineTo(cx+R+8,cy);ctx.moveTo(cx,cy-R-8);ctx.lineTo(cx,cy+R+8);ctx.stroke();
+  const x0=cx+R+30,x1=w-14;
+  ctx.strokeStyle=col('line');ctx.beginPath();ctx.moveTo(x0,cy);ctx.lineTo(x1,cy);ctx.stroke();
+  let tx,ty;
+  if(o.chain){
+    let px=cx,py=cy-(o.offset||0)*s;
+    if(o.offset){ctx.strokeStyle=col('muted');ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.stroke();ctx.setLineDash([]);}
+    o.vecs.forEach((v,i)=>{const r=v.amp*s;if(r<0.4)return;
+      if(i<12){ctx.strokeStyle=col('muted');ctx.globalAlpha=.3;ctx.lineWidth=1;ctx.beginPath();ctx.arc(px,py,r,0,TAU);ctx.stroke();ctx.globalAlpha=1;}
+      const nx=px+r*Math.cos(v.ang),ny=py-r*Math.sin(v.ang);vec(ctx,px,py,nx,ny,i===0?'accent':'s3',i===0?2.2:1.4);px=nx;py=ny;});
+    tx=px;ty=py;
+  } else {
+    const p=o.vecs.map(v=>({x:cx+v.amp*s*Math.cos(v.ang),y:cy-v.amp*s*Math.sin(v.ang)}));
+    if(o.sum){const S={x:p[0].x+p[1].x-cx,y:p[0].y+p[1].y-cy};
+      ctx.strokeStyle=col('muted');ctx.setLineDash([3,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p[0].x,p[0].y);ctx.lineTo(S.x,S.y);ctx.lineTo(p[1].x,p[1].y);ctx.stroke();ctx.setLineDash([]);
+      o.vecs.forEach((v,i)=>vec(ctx,cx,cy,p[i].x,p[i].y,v.color,1.8));vec(ctx,cx,cy,S.x,S.y,'s2',2.6);tx=S.x;ty=S.y;}
+    else{o.vecs.forEach((v,i)=>vec(ctx,cx,cy,p[i].x,p[i].y,v.color,2.2));tx=p[0].x;ty=p[0].y;}
+  }
+  ctx.strokeStyle=col('ink');ctx.globalAlpha=.4;ctx.setLineDash([2,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(x0,ty);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+  for(const wv of o.waves){
+    ctx.strokeStyle=col(wv.color);ctx.lineWidth=wv.width||1.6;ctx.globalAlpha=wv.alpha??1;ctx.beginPath();
+    let first=true;for(let px=x0;px<=x1;px+=1.5){const tau=(px-x0)/(x1-x0)*o.span,y=cy-wv.f(o.t-tau)*s;if(first){ctx.moveTo(px,y);first=false;}else ctx.lineTo(px,y);}
+    ctx.stroke();ctx.globalAlpha=1;
+  }
+  ctx.fillStyle=col('s2');ctx.beginPath();ctx.arc(x0,ty,4,0,TAU);ctx.fill();
+  if(o.note)txt(ctx,x0,16,o.note,{align:'left',color:'muted',font:NOTE});
+}
+function drawVerticalMachine(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const gy=h-44,mw=Math.min(240,w*0.5),mh=58,cx=w/2,restB=gy-74;
+  const s=o.maxmm>1e-12?26/o.maxmm:0,dy=o.xmm*s,bot=restB-dy,top=bot-mh;
+  ground(ctx,24,w-24,gy);eqLineH(ctx,cx-mw/2-30,cx+mw/2+30,restB);
+  const nShow=Math.min(o.N,4),xs=[];for(let i=0;i<nShow;i++)xs.push(cx-mw/2+mw*(i+0.5)/nShow);
+  xs.forEach((x,i)=>{if(o.damped&&nShow>1&&i%2===1)damperV(ctx,x,bot,gy,gy-restB);else springV(ctx,x,bot,gy,7,5);});
+  if(o.damped&&nShow===1)damperV(ctx,cx+22,bot,gy,gy-restB);
+  block(ctx,cx-mw/2,top,mw,mh,'M',{corner:true});
+  const rx=cx,ry=top+mh/2,R=mh*0.32;ctx.strokeStyle=col('mass-ink');ctx.globalAlpha=.55;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(rx,ry,R,0,TAU);ctx.stroke();ctx.globalAlpha=1;
+  const px=rx+R*Math.sin(o.theta),py=ry-R*Math.cos(o.theta);ctx.strokeStyle=col('mass-ink');ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(px,py);ctx.stroke();
+  ctx.fillStyle=col('s2');ctx.beginPath();ctx.arc(px,py,5,0,TAU);ctx.fill();
+  arrowV(ctx,Math.min(w-40,cx+mw/2+40),gy+4,gy+4+o.ft*30,'s4','F_T');
+  txt(ctx,cx-mw/2-8,restB-4,`x = ${o.xmm.toFixed(2)} mm`,{align:'right'});
+  txt(ctx,w-12,18,`${o.N} soportes`,{align:'right',color:'muted',font:NOTE});
+  if(o.note)txt(ctx,12,18,o.note,{align:'left',color:'muted',font:NOTE});
+}
+function drawInstrument(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const cx=w*0.4,gyRest=h-34,s=o.maxmm>1e-12?20/o.maxmm:0,yb=gyRest-o.ymm*s;
+  const hw=70,hh=150,hTop=yb-hh;
+  ctx.fillStyle=col('panel-2');ctx.strokeStyle=col('steel');ctx.lineWidth=1.6;rrect(ctx,cx-hw*1.5,yb,hw*3,14,3);ctx.fill();ctx.stroke();
+  arrowV(ctx,cx-hw*1.5-14,yb+8,yb+8-Math.sign(o.yv||1)*20,'s3','');
+  ctx.strokeStyle=col('steel');ctx.lineWidth=2;ctx.strokeRect(cx-hw/2,hTop,hw,hh);
+  const mRest=yb-hh*0.55,my=mRest-o.zmm*s,mH=26,mW=hw-26;
+  for(let k=-4;k<=4;k++){const yy=mRest+k*12;ctx.strokeStyle=col('muted');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx+hw/2-8,yy);ctx.lineTo(cx+hw/2,yy);ctx.stroke();}
+  springV(ctx,cx-10,my+mH/2,yb,6,5);damperV(ctx,cx+14,my+mH/2,yb,yb-mRest-mH/2);
+  block(ctx,cx-mW/2,my-mH/2,mW,mH,'m',{size:14});
+  ctx.strokeStyle=col('s2');ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx+mW/2,my);ctx.lineTo(cx+hw/2-1,my);ctx.stroke();
+  txt(ctx,cx+hw/2+12,mRest-6,`z = ${o.zmm.toFixed(3)} mm`,{align:'left'});
+  txt(ctx,cx+hw/2+12,mRest+14,`y = ${o.ymm.toFixed(2)} mm`,{align:'left',color:'s3'});
+  if(o.note)txt(ctx,12,18,o.note,{align:'left',color:'muted',font:NOTE});
+}
+function drawContinuum(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const x0=50,x1=w-50,cy=h/2,L=x1-x0,ph=Math.sin(o.phase);
+  const at=xi=>interp(o.phi,xi,1);
+  const ends=o.ends;
+  const endDraw=(x,type,side,y)=>{if(type==='wall')wall(ctx,x,y-34,y+34,side);else if(type==='pin')pin(ctx,x,y);};
+  if(o.sis==='cuerda'||o.sis==='viga'){
+    const A=Math.min(52,h*0.27)*ph;
+    eqLineH(ctx,x0,x1,cy);
+    ctx.strokeStyle=col(o.sis==='viga'?'mass':'steel');ctx.lineWidth=o.sis==='viga'?6:1.8;ctx.lineCap='round';ctx.beginPath();
+    for(let i=0;i<=160;i++){const xi=i/160,X=x0+L*xi,Y=cy-A*at(xi);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}ctx.stroke();ctx.lineCap='butt';
+    endDraw(x0,ends[0],-1,cy);endDraw(x1,ends[1],1,cy);
+  } else if(o.sis==='barra'){
+    const bh=30,A=0.45*(L/24)*ph;
+    ctx.fillStyle=col('panel-2');ctx.fillRect(x0,cy-bh/2,L,bh);
+    ctx.strokeStyle=col('steel');ctx.lineWidth=1.4;ctx.strokeRect(x0,cy-bh/2,L,bh);
+    for(let k=0;k<=24;k++){const xi=k/24,X=x0+L*xi+A*at(xi);ctx.strokeStyle=col(k%6===0?'accent':'muted');ctx.lineWidth=k%6===0?2:1;ctx.beginPath();ctx.moveTo(X,cy-bh/2);ctx.lineTo(X,cy+bh/2);ctx.stroke();}
+    endDraw(x0,ends[0],-1,cy);endDraw(x1,ends[1],1,cy);
+  } else {
+    const rh=24;ctx.fillStyle=col('panel-2');ctx.fillRect(x0,cy-rh,L,2*rh);ctx.strokeStyle=col('steel');ctx.lineWidth=1.4;ctx.strokeRect(x0,cy-rh,L,2*rh);
+    const A=0.9*ph;
+    for(let k=0;k<=10;k++){const xi=k/10,X=x0+L*xi,th=A*at(xi);
+      ctx.strokeStyle=col('muted');ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(X,cy,6,rh,0,0,TAU);ctx.stroke();
+      ctx.strokeStyle=col('accent');ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X,cy);ctx.lineTo(X+6*Math.sin(th),cy-rh*Math.cos(th));ctx.stroke();}
+    endDraw(x0,ends[0],-1,cy);endDraw(x1,ends[1],1,cy);
+  }
+  if(o.note)txt(ctx,12,18,o.note,{align:'left',color:'muted',font:NOTE});
+}
+function drawElastic(cv,o){
+  const {ctx,w,h}=sceneCtx(cv);
+  const ph=Math.sin(o.phase),e=o.elem;
+  if(e==='helicoidal'||e==='axial'){
+    const cx=w/2,topY=24;ceiling(ctx,cx-90,cx+90,topY);
+    const restL=h-110,d=10*ph,yb=topY+restL+d,mh=40,mw=80;
+    if(e==='helicoidal')springV(ctx,cx,topY,yb,12,9);
+    else{ctx.fillStyle=col('steel');ctx.fillRect(cx-4,topY,8,yb-topY);}
+    block(ctx,cx-mw/2,yb,mw,mh,'m');
+    eqLineH(ctx,cx-mw/2-30,cx+mw/2+30,topY+restL);
+  } else if(e==='torsion'){
+    const y=h/2,x0=40,x1=w*0.6;wall(ctx,x0,y-40,y+40,-1);
+    ctx.fillStyle=col('steel');ctx.fillRect(x0,y-5,x1-x0,10);
+    const R=Math.min(70,h*0.34),cx=x1+R*0.35;ctx.fillStyle=col('mass');ctx.beginPath();ctx.ellipse(cx,y,R*0.35,R,0,0,TAU);ctx.fill();
+    const th=0.9*ph;ctx.strokeStyle=col('mass-ink');ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(cx,y);ctx.lineTo(cx+R*0.35*Math.sin(th),y-R*Math.cos(th));ctx.stroke();
+    txt(ctx,cx+R*0.35+16,y-R+12,'J₀',{align:'left',font:`italic 15px ${MATHF}`});
+    txt(ctx,(x0+x1)/2,y+26,'eje · G J / L',{color:'muted'});
+  } else {
+    const y=h*0.42,x0=50,x1=w-50,L=x1-x0,D=26*ph;
+    let shape,mx;
+    if(e==='voladizo'){shape=q=>(3*q*q-q*q*q)/2;mx=1;wall(ctx,x0,y-34,y+34,-1);}
+    else if(e==='apoyada'){shape=q=>{const u=q<=0.5?q:1-q;return 3*u-4*u*u*u;};mx=0.5;pin(ctx,x0,y+4);pin(ctx,x1,y+4);}
+    else{shape=q=>{const u=q<=0.5?q:1-q;return 4*(3*u*u-4*u*u*u);};mx=0.5;wall(ctx,x0,y-34,y+34,-1);wall(ctx,x1,y-34,y+34,1);}
+    eqLineH(ctx,x0,x1,y);
+    ctx.strokeStyle=col('steel');ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();
+    for(let i=0;i<=120;i++){const q=i/120,X=x0+L*q,Y=y+D*shape(q);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}ctx.stroke();ctx.lineCap='butt';
+    const mX=x0+L*mx,mY=y+D*shape(mx);block(ctx,mX-26,mY-48,52,44,'m');
+  }
+  if(o.note)txt(ctx,12,h-12,o.note,{align:'left',color:'muted',font:NOTE});
+}
+
+/* ---------- module helpers ---------- */
+const ro=(label,sym,v,u,o={})=>Object.assign({label,sym,v,u},o);
+const famZ=[0.05,0.1,0.25,0.5,1];
+const MAT={acero:{n:'Acero',E:200e9,G:79e9,rho:7850},aluminio:{n:'Aluminio',E:69e9,G:26e9,rho:2700},laton:{n:'Latón',E:105e9,G:39e9,rho:8500},titanio:{n:'Titanio',E:114e9,G:44e9,rho:4430}};
+const matOpts=Object.entries(MAT).map(([k,m])=>[k,m.n]);
+function section(v){if(v.sec==='circ'){const d=v.d/1e3;return {A:Math.PI*d*d/4,I:Math.PI*d**4/64,J:Math.PI*d**4/32};}const b=v.b/1e3,h=v.h/1e3;return {A:b*h,I:b*h**3/12,J:NaN};}
+const sys=(z=0.05)=>[
+  {group:'Sistema'},
+  {key:'m',sym:'m',label:'Masa',unit:'kg',min:0.1,max:20,step:0.1,val:1},
+  {key:'k',sym:'k',label:'Rigidez',unit:'N/m',min:1,max:5000,step:1,val:40},
+  {key:'z',sym:'ζ',label:'Razón de amortiguamiento',unit:'',min:0,max:2,step:0.01,val:z},
+];
+const tfP=(val,max=60)=>[{group:'Simulación'},{key:'tf',sym:'t<sub>f</sub>',label:'Duración',unit:'s',min:1,max,step:0.5,val}];
+const SUBN=['₀','₁','₂','₃','₄','₅','₆','₇','₈','₉'];
+const subn=n=>String(n).split('').map(c=>SUBN[+c]).join('');
+
+/* ---------- modules ---------- */
+const MODS={};
+
+MODS.armonico={
+  nav:'Movimiento armónico',title:'Movimiento armónico y pulsaciones',
+  lead:'Cada movimiento armónico es la proyección de un fasor que gira a velocidad ω. Dos movimientos de frecuencias cercanas se suman en pulsaciones: la amplitud resultante sube y baja a la frecuencia de batido |f₁ − f₂|.',
+  eq:[String.raw`x(t)=A\,\operatorname{sen}(\omega t+\phi)`,String.raw`\dot x=\omega A\cos(\omega t+\phi),\qquad \ddot x=-\omega^{2}x`,String.raw`f_{\text{batido}}=\lvert f_1-f_2\rvert`],
+  hint:'iguala f₁ y f₂ y cambia φ₂: la suma es otro armónico de la misma frecuencia. Con f₂ = 1.05 Hz aparecen pulsaciones lentas.',
+  params:[{group:'Movimiento 1'},
+    {key:'A1',sym:'A<sub>1</sub>',label:'Amplitud',unit:'mm',min:0,max:20,step:0.5,val:10},
+    {key:'f1',sym:'f<sub>1</sub>',label:'Frecuencia',unit:'Hz',min:0.1,max:5,step:0.01,val:1},
+    {key:'p1',sym:'φ<sub>1</sub>',label:'Fase',unit:'°',min:-180,max:180,step:5,val:0},
+    {group:'Movimiento 2'},
+    {key:'A2',sym:'A<sub>2</sub>',label:'Amplitud',unit:'mm',min:0,max:20,step:0.5,val:8},
+    {key:'f2',sym:'f<sub>2</sub>',label:'Frecuencia',unit:'Hz',min:0.1,max:5,step:0.01,val:1.1},
+    {key:'p2',sym:'φ<sub>2</sub>',label:'Fase',unit:'°',min:-180,max:180,step:5,val:0},
+    ...tfP(20)],
+  plots:[{title:'Suma de los dos movimientos',xLabel:'t [s]',yLabel:'x [mm]',full:true},{title:'x₁, ẋ₁ y ẍ₁ normalizados por su amplitud',xLabel:'t [s]',yLabel:'valor / amplitud',full:true}],
+  compute(v){
+    const {A1,A2,f1,f2,tf}=v,w1=TAU*f1,w2=TAU*f2,q1=v.p1*Math.PI/180,q2=v.p2*Math.PI/180,n=1500;
+    const X1=t=>A1*Math.sin(w1*t+q1),X2=t=>A2*Math.sin(w2*t+q2),S=t=>X1(t)+X2(t);
+    const t=linspace(0,tf,n+1),x1=mapArr(t,X1),x2=mapArr(t,X2),s=mapArr(t,S);
+    const same=Math.abs(f1-f2)<1e-9;
+    const series=[{x:t,y:x1,color:'accent',width:1.2,alpha:.55,label:'x₁'},{x:t,y:x2,color:'s3',width:1.2,alpha:.55,label:'x₂'},{x:t,y:s,color:'s2',width:2.2,label:'x₁ + x₂'}];
+    let Rr=NaN,psi=NaN;
+    if(same){Rr=Math.hypot(A1*Math.cos(q1)+A2*Math.cos(q2),A1*Math.sin(q1)+A2*Math.sin(q2));psi=Math.atan2(A1*Math.sin(q1)+A2*Math.sin(q2),A1*Math.cos(q1)+A2*Math.cos(q2));}
+    else{const env=mapArr(t,tt=>Math.sqrt(Math.max(0,A1*A1+A2*A2+2*A1*A2*Math.cos((w1-w2)*tt+q1-q2))));
+      series.push({x:t,y:env,color:'muted',dash:true,width:1.2,label:'envolvente'},{x:t,y:mapArr(env,q=>-q),color:'muted',dash:true,width:1.2});}
+    const t2=linspace(0,2/f1,400);
+    const df=Math.abs(f1-f2),beats=!same&&df<0.25*Math.max(f1,f2);
+    return {tf,
+      readouts:[{label:'Suma',pill:same?'Misma frecuencia: la suma es un armónico':beats?'Pulsaciones':'Frecuencias distintas',tone:same?'info':beats?'ok':'mute',
+          note:same?`amplitud ${fmt(Rr,3)} mm, fase ${fmt(deg(psi),3)}°`:beats?`periodo de batido ${fmt(1/df,3)} s`:'la suma solo es periódica si f₁/f₂ es racional'},
+        ro('Frecuencia angular','ω<sub>1</sub>',w1,'rad/s'),ro('Periodo','T<sub>1</sub>',1/f1,'s'),
+        ro('Velocidad máxima','ωA<sub>1</sub>',w1*A1,'mm/s'),ro('Aceleración máxima','ω²A<sub>1</sub>',w1*w1*A1/1e3,'m/s²'),
+        ro('Frecuencia de batido','|f<sub>1</sub>−f<sub>2</sub>|',df,'Hz'),ro('Amplitud máxima','A<sub>1</sub>+A<sub>2</sub>',A1+A2,'mm'),ro('Amplitud mínima','|A<sub>1</sub>−A<sub>2</sub>|',Math.abs(A1-A2),'mm')],
+      plots:[{series},
+        {series:[{x:t2,y:mapArr(t2,tt=>Math.sin(w1*tt+q1)),color:'accent',width:2,label:'x/A'},{x:t2,y:mapArr(t2,tt=>Math.cos(w1*tt+q1)),color:'s3',width:2,label:'ẋ/(ωA): adelanta 90°'},{x:t2,y:mapArr(t2,tt=>-Math.sin(w1*tt+q1)),color:'s2',width:2,label:'ẍ/(ω²A): adelanta 180°'}],yRange:[-1.25,1.25]}],
+      csv:{head:['t [s]','x1 [mm]','x2 [mm]','x1+x2 [mm]'],cols:[t,x1,x2,s]},
+      cursor:tt=>[{x:tt,pts:[{x:tt,y:S(tt),color:'s2'}]},null],
+      scene:(cv,tt)=>drawPhasors(cv,{t:tt,maxAmp:Math.max(A1+A2,1e-6),sum:true,
+        vecs:[{amp:A1,ang:w1*tt+q1,color:'accent'},{amp:A2,ang:w2*tt+q2,color:'s3'}],
+        waves:[{f:X1,color:'accent',alpha:.45,width:1.2},{f:X2,color:'s3',alpha:.45,width:1.2},{f:S,color:'s2',width:2.2}],span:Math.min(tf,4/Math.min(f1,f2))})};
+  }
+};
+
+MODS.fourier={
+  nav:'Series de Fourier',title:'Análisis armónico de señales periódicas',
+  lead:'Toda señal periódica se descompone en una media y una suma de armónicos de frecuencias nω₀. La animación encadena los fasores de cada armónico: la punta de la cadena dibuja la suma parcial.',
+  eq:[String.raw`x(t)=\frac{a_0}{2}+\sum_{n=1}^{\infty}\left(a_n\cos n\omega_0 t+b_n\operatorname{sen} n\omega_0 t\right)`,
+      String.raw`a_n=\frac{2}{T}\int_0^{T}x(t)\cos n\omega_0 t\,dt,\qquad b_n=\frac{2}{T}\int_0^{T}x(t)\operatorname{sen} n\omega_0 t\,dt`],
+  hint:'con la onda cuadrada sube N de 5 a 50: el error RMS baja, pero el sobrepaso cerca del salto se queda en ≈ 9 % (fenómeno de Gibbs).',
+  params:[{group:'Señal'},
+    {key:'forma',type:'select',label:'Forma de onda',options:waveOpts,val:'cuadrada'},
+    {key:'d',sym:'d',label:'Ciclo de trabajo',unit:'',min:0.05,max:0.95,step:0.01,val:0.25,dep:v=>v.forma==='pulsos'},
+    {key:'A',sym:'A',label:'Amplitud',unit:'',min:0.1,max:10,step:0.1,val:1},
+    {key:'f0',sym:'f<sub>0</sub>',label:'Frecuencia fundamental',unit:'Hz',min:0.05,max:2,step:0.01,val:0.25},
+    {group:'Aproximación'},
+    {key:'N',sym:'N',label:'Número de armónicos',unit:'',min:1,max:60,step:1,val:5}],
+  plots:[{title:'Señal y suma parcial',xLabel:'t / T',yLabel:'x(t)',full:true},{title:'Espectro de amplitud',xLabel:'armónico n',yLabel:'cₙ',full:true}],
+  compute(v){
+    const {A,d,N,f0}=v,F=fourier(v.forma,A,d,Math.max(N,30)),T=1/f0,tf=2*T,n=1500,w0=TAU*f0;
+    const u=linspace(0,2,n+1),t=mapArr(u,q=>q*T);
+    const ex=mapArr(u,F.f);
+    const part=tt=>{let s=F.c0;for(let k=1;k<=N;k++)s+=F.a[k]*Math.cos(k*w0*tt)+F.b[k]*Math.sin(k*w0*tt);return s;};
+    const ps=mapArr(t,part);
+    const NM=Math.max(N,15),cn=[Math.abs(F.c0)];for(let k=1;k<=NM;k++)cn.push(Math.hypot(F.a[k]||0,F.b[k]||0));
+    const ks=Float64Array.from(cn.map((_,i)=>i)),inc=Float64Array.from(cn.map((c,i)=>i<=N?c:NaN)),exc=Float64Array.from(cn.map((c,i)=>i>N?c:NaN));
+    let e2=0,s2=0;for(let i=0;i<=n/2;i++){e2+=(ex[i]-ps[i])**2;s2+=ex[i]**2;}
+    const rmsErr=Math.sqrt(e2/s2)*100,mx=absMax(ex),exMax=Math.max(...ex),exMin=Math.min(...ex),over=Math.max(0,(Math.max(...ps)-exMax)/(exMax-exMin)*100);
+    const tiny=1e-9*A,evenZero=[2,4,6].every(k=>Math.abs(F.a[k])<tiny&&Math.abs(F.b[k])<tiny),oddZero=[1,3,5].every(k=>Math.abs(F.a[k])<tiny&&Math.abs(F.b[k])<tiny);
+    const sinOnly=F.a.every(x=>Math.abs(x)<tiny)&&Math.abs(F.c0)<tiny,cosOnly=F.b.every(x=>Math.abs(x)<tiny);
+    const vecs=[];for(let k=1;k<=N;k++){const c=Math.hypot(F.a[k],F.b[k]);if(c>tiny)vecs.push({k,amp:c,psi:Math.atan2(F.a[k],F.b[k])});}
+    const lo=Math.min(exMin,0)-mx*0.3,hi=exMax+mx*0.3;
+    return {tf,
+      readouts:[{label:'Contenido',pill:evenZero?'Solo armónicos impares':oddZero?'Solo armónicos pares (y la media)':'Armónicos pares e impares',tone:'info',
+          note:sinOnly?'función impar: serie de senos':cosOnly?'función par: serie de cosenos':'la serie tiene senos y cosenos'},
+        ro('Valor medio','a<sub>0</sub>/2',F.c0,''),ro('Fundamental','c<sub>1</sub>',cn[1],''),ro('Segundo armónico','c<sub>2</sub>',cn[2],''),ro('Tercer armónico','c<sub>3</sub>',cn[3],''),
+        ro('Frecuencia fundamental','ω<sub>0</sub>',w0,'rad/s'),ro(`Error RMS con N = ${N}`,'ε',rmsErr,'%'),ro('Sobrepaso máximo','',over,'%')],
+      plots:[{xRange:[0,2],yRange:[lo,hi],series:[{x:u,y:ex,color:'muted',width:1.6,label:'señal exacta'},{x:u,y:ps,color:'s2',width:2,label:`suma con N = ${N}`}]},
+        {xRange:[-0.5,NM+0.5],yZero:true,series:[{x:ks,y:inc,color:'accent',stem:true,label:'incluidos'},{x:ks,y:exc,color:'muted',stem:true,alpha:.6,label:'omitidos'}]}],
+      csv:{head:['t [s]','x exacta','x Fourier'],cols:[t,ex,ps]},
+      cursor:tt=>[{x:tt/T,pts:[{x:tt/T,y:part(tt),color:'s2'}]},null],
+      scene:(cv,tt)=>drawPhasors(cv,{t:tt,chain:true,maxAmp:mx*1.3,offset:F.c0,vecs:vecs.map(q=>({amp:q.amp,ang:q.k*w0*tt+q.psi})),
+        waves:[{f:q=>F.f(q/T),color:'muted',alpha:.6,width:1.2},{f:part,color:'s2',width:2.2}],span:T*1.5})};
+  }
+};
+
+MODS.elasticos={
+  nav:'Elementos elásticos',title:'Rigidez equivalente y masa efectiva',
+  lead:'Resortes, vigas, barras y ejes se modelan como un resorte equivalente. El método de Rayleigh agrega una fracción de la masa del elemento a la masa del sistema; ignorarla sobrestima la frecuencia natural.',
+  eq:[String.raw`k_{\text{voladizo}}=\frac{3EI}{L^{3}},\quad k_{\text{apoyada}}=\frac{48EI}{L^{3}},\quad k_{\text{resorte}}=\frac{G d^{4}}{8D^{3}N_a}`,
+      String.raw`k_{\parallel}=k_1+k_2,\qquad \frac{1}{k_{\text{serie}}}=\frac{1}{k_1}+\frac{1}{k_2}`,
+      String.raw`\omega_n=\sqrt{\frac{k_{eq}}{m+\alpha\,m_{e}}},\qquad \alpha=\tfrac{1}{3},\ \tfrac{33}{140},\ \tfrac{17}{35},\ \tfrac{13}{35}`],
+  hint:'elige voladizo con una masa pequeña (0.1 kg): la corrección de Rayleigh cambia la frecuencia varios por ciento. Con 20 kg casi no importa.',
+  params:[{group:'Elemento'},
+    {key:'elem',type:'select',label:'Tipo de elemento',options:[['helicoidal','Resorte helicoidal'],['voladizo','Viga en voladizo, masa en el extremo'],['apoyada','Viga simplemente apoyada, masa al centro'],['empotrada','Viga empotrada–empotrada, masa al centro'],['axial','Barra en tracción, masa colgante'],['torsion','Eje en torsión con disco']],val:'voladizo'},
+    {key:'mat',type:'select',label:'Material',options:matOpts,val:'acero'},
+    {key:'sec',type:'select',label:'Sección',options:[['rect','Rectangular b × h'],['circ','Circular de diámetro d']],val:'rect',dep:v=>['voladizo','apoyada','empotrada','axial'].includes(v.elem)},
+    {key:'L',sym:'L',label:'Longitud',unit:'mm',min:10,max:2000,step:5,val:400,dep:v=>v.elem!=='helicoidal'},
+    {key:'b',sym:'b',label:'Ancho',unit:'mm',min:1,max:200,step:1,val:30,dep:v=>v.sec==='rect'&&['voladizo','apoyada','empotrada','axial'].includes(v.elem)},
+    {key:'h',sym:'h',label:'Espesor (dirección de flexión)',unit:'mm',min:0.5,max:100,step:0.5,val:4,dep:v=>v.sec==='rect'&&['voladizo','apoyada','empotrada','axial'].includes(v.elem)},
+    {key:'d',sym:'d',label:'Diámetro',unit:'mm',min:1,max:200,step:0.5,val:10,dep:v=>v.elem==='torsion'||(v.sec==='circ'&&['voladizo','apoyada','empotrada','axial'].includes(v.elem))},
+    {key:'dw',sym:'d',label:'Diámetro del alambre',unit:'mm',min:0.5,max:15,step:0.1,val:3,dep:v=>v.elem==='helicoidal'},
+    {key:'Dm',sym:'D',label:'Diámetro medio de espira',unit:'mm',min:5,max:150,step:1,val:30,dep:v=>v.elem==='helicoidal'},
+    {key:'Na',sym:'N<sub>a</sub>',label:'Espiras activas',unit:'',min:2,max:40,step:1,val:10,dep:v=>v.elem==='helicoidal'},
+    {group:'Masa'},
+    {key:'m',sym:'m',label:'Masa concentrada (o del disco)',unit:'kg',min:0.05,max:50,step:0.05,val:1},
+    {key:'R',sym:'R',label:'Radio del disco macizo',unit:'mm',min:10,max:400,step:5,val:100,dep:v=>v.elem==='torsion'},
+    {group:'Segundo resorte'},
+    {key:'arr',type:'select',label:'Combinación',options:[['solo','Sin segundo resorte'],['paralelo','En paralelo'],['serie','En serie']],val:'solo',dep:v=>v.elem!=='torsion'},
+    {key:'k2',sym:'k<sub>2</sub>',label:'Rigidez del segundo resorte',unit:'N/mm',min:0.1,max:500,step:0.1,val:5,dep:v=>v.elem!=='torsion'&&v.arr!=='solo'}],
+  plots:[{title:'Frecuencia natural en función de la masa',xLabel:'m [kg]',yLabel:'fₙ [Hz]',full:true}],
+  compute(v){
+    const M=MAT[v.mat],e=v.elem,m=v.m;let k,me,alpha,ku='N/m',name,inert=m,tors=false;
+    if(e==='helicoidal'){const d=v.dw/1e3,D=v.Dm/1e3;k=M.G*d**4/(8*D**3*v.Na);me=M.rho*(Math.PI*d*d/4)*(Math.PI*D*v.Na);alpha=1/3;name='Resorte helicoidal';}
+    else if(e==='torsion'){const d=v.d/1e3,L=v.L/1e3,J=Math.PI*d**4/32;k=M.G*J/L;ku='N·m/rad';const R=v.R/1e3;inert=m*R*R/2;me=M.rho*J*L;alpha=1/3;name='Eje en torsión';tors=true;}
+    else{const S=section(v),L=v.L/1e3;me=M.rho*S.A*L;
+      if(e==='voladizo'){k=3*M.E*S.I/L**3;alpha=33/140;name='Viga en voladizo';}
+      else if(e==='apoyada'){k=48*M.E*S.I/L**3;alpha=17/35;name='Viga simplemente apoyada';}
+      else if(e==='empotrada'){k=192*M.E*S.I/L**3;alpha=13/35;name='Viga empotrada–empotrada';}
+      else{k=M.E*S.A/L;alpha=1/3;name='Barra axial';}}
+    let keq=k;const k2=v.k2*1e3;
+    if(!tors&&v.arr==='paralelo')keq=k+k2;else if(!tors&&v.arr==='serie')keq=1/(1/k+1/k2);
+    const wn0=Math.sqrt(keq/inert),wn=Math.sqrt(keq/(inert+alpha*me)),fn=wn/TAU,err=(wn0/wn-1)*100;
+    const ms=linspace(Math.max(0.02,m*0.05),Math.max(m*4,1),300),I=q=>tors?q*(v.R/1e3)**2/2:q;
+    const fWith=mapArr(ms,q=>Math.sqrt(keq/(I(q)+alpha*me))/TAU),fWo=mapArr(ms,q=>Math.sqrt(keq/I(q))/TAU);
+    const fv=visF(fn);
+    return {tf:4/fv,
+      readouts:[{label:'Elemento',pill:name,tone:'info',note:`α = ${fmt(alpha,4)} de la ${tors?'inercia del eje':'masa del elemento'} se suma`},
+        ro('Rigidez del elemento','k',k,ku),ro('Rigidez equivalente','k<sub>eq</sub>',keq,ku),
+        ro(tors?'Inercia del eje':'Masa del elemento','m<sub>e</sub>',me,tors?'kg·m²':'kg'),ro(tors?'Inercia del disco':'Masa concentrada',tors?'J<sub>0</sub>':'m',inert,tors?'kg·m²':'kg'),
+        ro('Frecuencia natural','ω<sub>n</sub>',wn,'rad/s'),ro('Frecuencia natural','f<sub>n</sub>',fn,'Hz'),
+        ro('Sin masa del elemento','f<sub>n,0</sub>',wn0/TAU,'Hz'),ro('Error si se ignora','',err,'%'),
+        ro('Deflexión estática','δ<sub>st</sub>',tors?NaN:m*G/keq*1e3,'mm')],
+      plots:[{xRange:[ms[0],ms[ms.length-1]],series:[{x:ms,y:fWith,color:'accent',width:2.2,label:'con masa efectiva (Rayleigh)'},{x:ms,y:fWo,color:'s2',dash:true,width:1.6,label:'ignorando la masa del elemento'}],markers:[{x:m,y:fn,color:'accent',label:`${fmt(fn,4)} Hz`}]}],
+      cursor:()=>[null],
+      scene:(cv,tt)=>drawElastic(cv,{elem:e,phase:TAU*fv*tt,note:fn>fv*1.01?`fₙ = ${fmt(fn,4)} Hz · animación ralentizada`:''})};
+  }
+};
+
+MODS.libre={
+  nav:'Respuesta libre viscosa',title:'Vibración libre con amortiguamiento viscoso',
+  lead:'Masa, resorte y amortiguador viscoso sin fuerza externa: el sistema responde solo a sus condiciones iniciales. Mueve ζ para recorrer los cuatro regímenes.',
+  eq:[String.raw`m\ddot x+c\dot x+kx=0`,String.raw`\omega_n=\sqrt{k/m},\qquad \zeta=\frac{c}{2\sqrt{km}},\qquad \omega_d=\omega_n\sqrt{1-\zeta^{2}}`,
+      String.raw`x(t)=e^{-\zeta\omega_n t}\left(x_0\cos\omega_d t+\frac{v_0+\zeta\omega_n x_0}{\omega_d}\operatorname{sen}\omega_d t\right)`],
+  hint:'compara ζ = 0.99, 1.00 y 1.01. La curva casi no cambia, aunque la forma de la solución analítica sí.',
+  params:[...sys(0.05),{group:'Condiciones iniciales'},
+    {key:'x0',sym:'x<sub>0</sub>',label:'Desplazamiento',unit:'mm',min:-50,max:50,step:0.5,val:20},
+    {key:'v0',sym:'v<sub>0</sub>',label:'Velocidad',unit:'mm/s',min:-500,max:500,step:5,val:0},...tfP(10)],
+  plots:[{title:'Desplazamiento x(t)',xLabel:'t [s]',yLabel:'x [mm]'},{title:'Plano de fase',xLabel:'x [mm]',yLabel:'ẋ [mm/s]'}],
+  compute(v){
+    const {m,k,z,tf}=v,x0=v.x0/1e3,v0=v.v0/1e3;
+    const wn=Math.sqrt(k/m),cc=2*Math.sqrt(k*m),c=z*cc,n=1500;
+    const s=rk4((t,y)=>[y[1],(-c*y[1]-k*y[0])/m],[x0,v0],tf,n,subFor(wn,tf,n));
+    const t=s.t,x=toMM(s.y[0]),xv=toMM(s.y[1]);
+    let regime,tone;
+    if(z===0){regime='No amortiguado';tone='info';}else if(z<1-1e-9){regime='Subamortiguado';tone='ok';}
+    else if(Math.abs(z-1)<1e-9){regime='Críticamente amortiguado';tone='warn';}else{regime='Sobreamortiguado';tone='mute';}
+    const under=z<1-1e-9,wd=under?wn*Math.sqrt(1-z*z):NaN;
+    const series=[{x:t,y:x,color:'accent',width:2,label:'x(t)'}];
+    const Xenv=under?Math.hypot(x0,(v0+z*wn*x0)/wd)*1e3:NaN;
+    if(under){const e=mapArr(t,tt=>Xenv*Math.exp(-z*wn*tt));series.push({x:t,y:e,color:'muted',dash:true,width:1.3,label:'envolvente X e^(−ζωₙt)'},{x:t,y:mapArr(e,q=>-q),color:'muted',dash:true,width:1.3});}
+    const A=absMax(x);let ts;
+    if(A===0)ts=0;else if(z===0)ts=Infinity;
+    else{let idx=-1;for(let i=x.length-1;i>=0;i--)if(Math.abs(x[i])>0.02*A){idx=i;break;}ts=idx>=x.length-2?null:t[Math.min(idx+1,x.length-1)];}
+    return {tf,
+      readouts:[{label:'Régimen',pill:regime,tone,note:under?(z===0?'oscila sin decaer':'oscila a ωd con amplitud decreciente'):'no oscila'},
+        ro('Frecuencia natural','ω<sub>n</sub>',wn,'rad/s'),ro('Frecuencia natural','f<sub>n</sub>',wn/TAU,'Hz'),ro('Periodo natural','T<sub>n</sub>',TAU/wn,'s'),
+        ro('Amortiguamiento crítico','c<sub>c</sub>',cc,'N·s/m'),ro('Coef. de amortiguamiento','c',c,'N·s/m'),
+        ro('Frec. amortiguada','ω<sub>d</sub>',wd,'rad/s'),ro('Periodo amortiguado','T<sub>d</sub>',under?TAU/wd:NaN,'s'),
+        ro('Decremento logarítmico','δ',under?TAU*z/Math.sqrt(1-z*z):NaN,''),ro('Amplitud de la envolvente','X',Xenv,'mm'),
+        ro('Asentamiento (2 %)','t<sub>s</sub>',ts===null?`> ${tf}`:ts,'s'),ro('Energía inicial','E<sub>0</sub>',0.5*k*x0*x0+0.5*m*v0*v0,'J')],
+      plots:[{series},{series:[{x,y:xv,color:'s3',width:1.8,label:'trayectoria'}],markers:[{x:x[0],y:xv[0],color:'s2',label:'inicio'}]}],
+      csv:{head:['t [s]','x [mm]','v [mm/s]'],cols:[t,x,xv]},
+      cursor:tt=>{const a=interp(x,tt,tf),b=interp(xv,tt,tf);return [{x:tt,pts:[{x:tt,y:a}]},{pts:[{x:a,y:b,color:'s3'}]}];},
+      scene:(cv,tt)=>drawSDOF(cv,{xmm:interp(x,tt,tf),maxmm:A,damper:z>0})};
+  }
+};
+
+MODS.coulomb={
+  nav:'Fricción de Coulomb',title:'Amortiguamiento por fricción seca',
+  lead:'Con fricción de Coulomb la fuerza disipativa tiene magnitud constante μmg. Cada medio ciclo es una oscilación libre alrededor de ±Δ, la amplitud cae linealmente 4Δ por ciclo y la masa se detiene dentro de la banda |x| ≤ Δ.',
+  eq:[String.raw`m\ddot x+kx=-\mu m g\,\operatorname{sgn}(\dot x)`,String.raw`\Delta=\frac{\mu m g}{k},\qquad \text{pérdida de amplitud por ciclo}=4\Delta`],
+  hint:'compara la envolvente con la del módulo viscoso: aquí es una recta, allá una exponencial. El periodo no cambia con la fricción.',
+  params:[{group:'Sistema'},
+    {key:'m',sym:'m',label:'Masa',unit:'kg',min:0.1,max:20,step:0.1,val:1},
+    {key:'k',sym:'k',label:'Rigidez',unit:'N/m',min:1,max:5000,step:1,val:40},
+    {key:'mu',sym:'μ',label:'Coeficiente de fricción',unit:'',min:0.005,max:0.5,step:0.005,val:0.05},
+    {group:'Condiciones iniciales'},
+    {key:'x0',sym:'x<sub>0</sub>',label:'Desplazamiento',unit:'mm',min:-100,max:100,step:1,val:80},
+    {key:'v0',sym:'v<sub>0</sub>',label:'Velocidad',unit:'mm/s',min:-500,max:500,step:5,val:0},...tfP(10)],
+  plots:[{title:'Desplazamiento con envolvente lineal',xLabel:'t [s]',yLabel:'x [mm]'},{title:'Plano de fase: arcos centrados en ±Δ',xLabel:'x [mm]',yLabel:'ẋ [mm/s]'}],
+  compute(v){
+    const {m,k,mu,tf}=v,wn=Math.sqrt(k/m),D=mu*m*G/k,Tn=TAU/wn,n=1500;
+    const S=coulombSim(v.x0/1e3,v.v0/1e3,wn,D,tf,n),t=S.t,x=toMM(S.x),xv=toMM(S.v),Dm=D*1e3;
+    const series=[{x:t,y:x,color:'accent',width:2,label:'x(t)'}];
+    const first=S.turns[0];
+    if(first){const X1=Math.abs(first.x)*1e3,env=mapArr(t,tt=>{if(tt<first.t-Tn/2)return NaN;const e=X1-4*Dm*(tt-first.t)/Tn;return e>Dm?e:NaN;});
+      series.push({x:t,y:env,color:'muted',dash:true,width:1.3,label:'envolvente: pendiente 4Δ/Tₙ'},{x:t,y:mapArr(env,q=>-q),color:'muted',dash:true,width:1.3});}
+    const stopped=S.stopT!=null&&S.stopT<=tf,A=Math.max(absMax(x),1e-9);
+    const halfs=S.turns.filter(q=>q.t<=tf).length;
+    return {tf,
+      readouts:[{label:'Estado',pill:stopped?`Se detiene en t = ${fmt(S.stopT,3)} s`:'Sigue oscilando al final',tone:stopped?'ok':'info',note:stopped?`posición final ${fmt(x[x.length-1],3)} mm, dentro de ±Δ`:'aumenta la duración para verla detenerse'},
+        ro('Banda muerta','Δ = μmg/k',Dm,'mm'),ro('Pérdida de amplitud por ciclo','4Δ',4*Dm,'mm'),ro('Frecuencia natural','ω<sub>n</sub>',wn,'rad/s'),
+        ro('Periodo (no cambia)','T<sub>n</sub>',Tn,'s'),ro('Medios ciclos hasta detenerse','',stopped?halfs:`> ${halfs}`,''),ro('Fuerza de fricción','μmg',mu*m*G,'N')],
+      plots:[{series,bands:[{y:[-Dm,Dm],color:'s4',alpha:.12}],hlines:[{y:Dm,color:'s4',label:'+Δ'},{y:-Dm,color:'s4',label:'−Δ'}]},
+        {series:[{x,y:xv,color:'s3',width:1.8,label:'trayectoria'}],markers:[{x:Dm,y:0,color:'s4',r:4,label:'+Δ'},{x:-Dm,y:0,color:'s4',r:4}]}],
+      csv:{head:['t [s]','x [mm]','v [mm/s]'],cols:[t,x,xv]},
+      cursor:tt=>{const a=interp(x,tt,tf),b=interp(xv,tt,tf);return [{x:tt,pts:[{x:tt,y:a}]},{pts:[{x:a,y:b,color:'s3'}]}];},
+      scene:(cv,tt)=>{const vv=interp(xv,tt,tf);drawSDOF(cv,{xmm:interp(x,tt,tf),maxmm:A,friction:true,fdir:Math.abs(vv)>1e-3?Math.sign(vv):0});}};
+  }
+};
+
+MODS.amortiguamiento={
+  nav:'Estimación del amortiguamiento',title:'Estimar ζ a partir de una medición',
+  lead:'Una señal de decaimiento simulada con ruido, como la de un acelerómetro en el laboratorio. Se estima ζ por decremento logarítmico (con dos picos o con regresión sobre todos) y por el método de media potencia en la respuesta en frecuencia.',
+  eq:[String.raw`\delta=\frac{1}{n}\ln\frac{x_0}{x_n},\qquad \zeta=\frac{\delta}{\sqrt{4\pi^{2}+\delta^{2}}}`,String.raw`\zeta\approx\frac{\omega_2-\omega_1}{2\,\omega_n}\qquad\left(|H(\omega_{1,2})|=\frac{|H|_{\max}}{\sqrt2}\right)`],
+  hint:'desmarca “Mostrar valores reales”, pulsa “Nueva medición” y pide a los estudiantes estimar ζ. Con mucho ruido, la regresión es más robusta que usar solo dos picos.',
+  params:[{group:'Sistema medido'},
+    {key:'fn',sym:'f<sub>n</sub>',label:'Frecuencia natural real',unit:'Hz',min:0.5,max:20,step:0.1,val:2},
+    {key:'z',sym:'ζ',label:'Amortiguamiento real',unit:'',min:0.005,max:0.3,step:0.005,val:0.03},
+    {group:'Medición'},
+    {key:'noise',sym:'σ',label:'Ruido del sensor',unit:'%',min:0,max:20,step:0.5,val:3},
+    {key:'nc',sym:'n',label:'Ciclos entre x₀ y xₙ',unit:'',min:1,max:15,step:1,val:5},
+    {key:'show',type:'bool',label:'Mostrar valores reales',val:true}],
+  actions:[{label:'Nueva medición',run:M=>{M.seed=(M.seed||1)+1;}}],
+  plots:[{title:'Señal medida y picos detectados',xLabel:'t [s]',yLabel:'x [mm]',full:true},{title:'ln(xᵢ) frente al número de pico',xLabel:'pico i',yLabel:'ln xᵢ'},{title:'Respuesta en frecuencia medida',xLabel:'f [Hz]',yLabel:'|H| normalizada'}],
+  compute(v){
+    const seed=this.seed||1,rand=prng(seed*977+13),{fn,z}=v,wn=TAU*fn,wd=wn*Math.sqrt(1-z*z),X0=10,sig=v.noise/100*X0;
+    const tf=Math.min(25/fn,Math.max(8/fn,3/(z*wn))),fs=40*fn,N=Math.round(tf*fs);
+    const t=linspace(0,tf,N+1),x=mapArr(t,tt=>X0*Math.exp(-z*wn*tt)*Math.cos(wd*tt)+sig*gauss(rand));
+    const pk=decayPeaks(t,x,Math.max(1,Math.round(fs/(fn*16))));
+    const nUse=Math.min(v.nc,pk.length-1);
+    const delta=nUse>=1?Math.log(pk[0].x/pk[nUse].x)/nUse:NaN,zLD=delta/Math.sqrt(4*Math.PI*Math.PI+delta*delta);
+    const good=pk.map((p,i)=>({i,l:Math.log(p.x),x:p.x})).filter(p=>p.x>Math.max(3*sig,0.02*X0));
+    const fit=good.length>=3?linfit(good.map(p=>p.i),good.map(p=>p.l)):null;
+    const dReg=fit?-fit.m:NaN,zReg=dReg/Math.sqrt(4*Math.PI*Math.PI+dReg*dReg);
+    const zUse=isFinite(zReg)?zReg:zLD;
+    const Td=pk.length>2?(pk[pk.length-1].t-pk[0].t)/(pk.length-1):NaN,fnEst=1/Td/Math.sqrt(1-zUse*zUse);
+    const fr=linspace(0.02*fn,2*fn,600),H=mapArr(fr,f=>amp(f/fn,z)*(1+v.noise/200*gauss(rand))),Hn=mapArr(H,q=>q*2*z);
+    let ip=0;for(let i=1;i<H.length;i++)if(H[i]>H[ip])ip=i;
+    const lev=H[ip]/Math.SQRT2;let f1=NaN,f2=NaN;
+    for(let i=ip;i>0;i--)if(H[i-1]<lev){f1=fr[i-1]+(lev-H[i-1])/(H[i]-H[i-1])*(fr[i]-fr[i-1]);break;}
+    for(let i=ip;i<H.length-1;i++)if(H[i+1]<lev){f2=fr[i]+(H[i]-lev)/(H[i]-H[i+1])*(fr[i+1]-fr[i]);break;}
+    const zHP=(f2-f1)/(2*fr[ip]);
+    const err=e=>(e/z-1)*100;
+    const pkT=Float64Array.from(pk.map(p=>p.t)),pkX=Float64Array.from(pk.map(p=>p.x));
+    const idx=Float64Array.from(pk.map((_,i)=>i)),lnx=Float64Array.from(pk.map(p=>Math.log(p.x)));
+    const rr=[
+      {label:'Medición',pill:`Medición simulada n.º ${seed}`,tone:'info',note:`${pk.length} picos detectados · muestreo ${fmt(fs,3)} Hz · ruido ${v.noise} %`},
+      ro(`Decremento con n = ${nUse}`,'δ',delta,''),ro('ζ por decremento (2 picos)','ζ<sub>δ</sub>',zLD,''),ro('ζ por regresión','ζ<sub>reg</sub>',zReg,''),
+      ro('ζ por media potencia','ζ<sub>mp</sub>',zHP,''),ro('Frecuencia natural estimada','f<sub>n</sub>',fnEst,'Hz'),ro('Banda de media potencia','f<sub>2</sub>−f<sub>1</sub>',f2-f1,'Hz')];
+    if(v.show)rr.push(ro('ζ real','ζ',z,''),ro('Error por decremento','',err(zLD),'%'),ro('Error por regresión','',err(zReg),'%'),ro('Error por media potencia','',err(zHP),'%'));
+    const mk=[];if(pk[0])mk.push({x:pk[0].t,y:pk[0].x,color:'s2',label:'x₀'});if(nUse>0&&pk[nUse])mk.push({x:pk[nUse].t,y:pk[nUse].x,color:'s2',label:'x'+subn(nUse)});
+    const fitLine=fit?[{x:Float64Array.from([0,pk.length-1]),y:Float64Array.from([fit.b,fit.b+fit.m*(pk.length-1)]),color:'s2',dash:true,width:1.6,label:`recta: pendiente = −δ = ${fmt(fit.m,3)}`}]:[];
+    const hp=isFinite(f1)&&isFinite(f2);
+    return {
+      readouts:rr,
+      plots:[{series:[{x:t,y:x,color:'accent',width:1.3,label:'señal medida'},{x:pkT,y:pkX,color:'s3',dots:true,r:3.5,label:'picos'}],markers:mk},
+        {series:[{x:idx,y:lnx,color:'accent',dots:true,r:4,label:'ln xᵢ'},...fitLine],xRange:[-0.5,Math.max(pk.length-0.5,1)]},
+        {yZero:true,series:[{x:fr,y:Hn,color:'accent',width:1.6,label:'|H| medida'}],hlines:[{y:Hn[ip]/Math.SQRT2,color:'s2',label:'máx/√2'}],vlines:hp?[{x:f1,color:'s2',label:'f₁'},{x:f2,color:'s2',label:'f₂',row:1}]:[],bands:hp?[{x:[f1,f2],color:'s2',alpha:.1}]:[]}],
+      csv:{head:['t [s]','x [mm]'],cols:[t,x]}};
+  }
+};
+
+MODS.forzada={
+  nav:'Fuerza armónica',title:'Respuesta a una fuerza armónica',
+  lead:'Una fuerza F₀ sen ωt actúa sobre la masa. La respuesta total suma un transitorio que se apaga y el estado estacionario, que oscila a la frecuencia de la fuerza con amplitud X y retraso φ.',
+  eq:[String.raw`m\ddot x+c\dot x+kx=F_0\operatorname{sen}\omega t`,
+      String.raw`\frac{X}{\delta_{st}}=\frac{1}{\sqrt{(1-r^{2})^{2}+(2\zeta r)^{2}}},\qquad \tan\phi=\frac{2\zeta r}{1-r^{2}}`],
+  hint:'pon ζ = 0, r = 1 y una duración de 30 s: la amplitud crece linealmente. Con ζ = 0 y r = 0.9 aparecen pulsaciones.',
+  params:[...sys(0.05),{group:'Excitación'},
+    {key:'F0',sym:'F<sub>0</sub>',label:'Amplitud de fuerza',unit:'N',min:0,max:20,step:0.1,val:0.5},
+    {key:'r',sym:'r',label:'Razón de frecuencias ω/ω<sub>n</sub>',unit:'',min:0.05,max:3,step:0.01,val:0.9},
+    {group:'Condiciones iniciales'},
+    {key:'x0',sym:'x<sub>0</sub>',label:'Desplazamiento',unit:'mm',min:-50,max:50,step:0.5,val:0},
+    {key:'v0',sym:'v<sub>0</sub>',label:'Velocidad',unit:'mm/s',min:-500,max:500,step:5,val:0},...tfP(20)],
+  plots:[{title:'Respuesta total y estado estacionario',xLabel:'t [s]',yLabel:'x [mm]',full:true},
+         {title:'Factor de amplificación',xLabel:'r = ω/ωₙ',yLabel:'X/δst'},{title:'Ángulo de fase',xLabel:'r = ω/ωₙ',yLabel:'φ [°]'}],
+  compute(v){
+    const {m,k,z,F0,r,tf}=v,x0=v.x0/1e3,v0=v.v0/1e3;
+    const wn=Math.sqrt(k/m),c=2*z*Math.sqrt(k*m),w=r*wn,n=1500;
+    const s=rk4((t,y)=>[y[1],(F0*Math.sin(w*t)-c*y[1]-k*y[0])/m],[x0,v0],tf,n,subFor(Math.max(wn,w),tf,n));
+    const t=s.t,x=toMM(s.y[0]);
+    const dst=F0/k,MF=amp(r,z),X=dst*MF,phi=phs(r,z);
+    const xss=mapArr(t,tt=>isFinite(X)?X*1e3*Math.sin(w*tt-phi):NaN);
+    const rr=linspace(0,3,1501),MFc=mapArr(rr,q=>amp(q,z)),PH=mapArr(rr,q=>deg(phs(q,z)));
+    const fin=[...MFc].filter(isFinite);let ym=Math.max(...fin,isFinite(MF)?MF:0)*1.12;ym=Math.min(Math.max(ym,1.5),30);
+    const rpk=z<Math.SQRT1_2?Math.sqrt(1-2*z*z):NaN,MFmax=z<Math.SQRT1_2?(z>0?1/(2*z*Math.sqrt(1-z*z)):Infinity):1;
+    let r1=NaN,r2=NaN;
+    if(z>0&&z<0.3){let ip=0;for(let i=1;i<MFc.length;i++)if(MFc[i]>MFc[ip])ip=i;const lev=MFc[ip]/Math.SQRT2;
+      for(let i=ip;i>0;i--)if(MFc[i-1]<lev){r1=rr[i-1]+(lev-MFc[i-1])/(MFc[i]-MFc[i-1])*(rr[i]-rr[i-1]);break;}
+      for(let i=ip;i<MFc.length-1;i++)if(MFc[i+1]<lev){r2=rr[i]+(MFc[i]-lev)/(MFc[i]-MFc[i+1])*(rr[i+1]-rr[i]);break;}}
+    let zone,tone;if(Math.abs(r-1)<=0.05){zone='Cerca de resonancia';tone='crit';}else if(r<1){zone='Zona controlada por rigidez (r < 1)';tone='info';}else{zone='Zona controlada por masa (r > 1)';tone='ok';}
+    const A=Math.max(absMax(x),1e-9),hp=isFinite(r1)&&isFinite(r2);
+    return {tf,
+      readouts:[{label:'Zona',pill:zone,tone,note:`el estado estacionario va ${fmt(deg(phi),3)}° detrás de la fuerza`},
+        ro('Frecuencia natural','ω<sub>n</sub>',wn,'rad/s'),ro('Frec. de excitación','ω',w,'rad/s'),ro('Frec. de excitación','f',w/TAU,'Hz'),
+        ro('Deflexión estática','δ<sub>st</sub>',dst*1e3,'mm'),ro('Factor de amplificación','X/δ<sub>st</sub>',MF,''),ro('Amplitud estacionaria','X',X*1e3,'mm'),
+        ro('Ángulo de fase','φ',deg(phi),'°'),ro('Razón de pico','r<sub>pico</sub>',isFinite(rpk)?rpk:'sin pico',''),
+        ro('Amplificación máxima','(X/δ<sub>st</sub>)<sub>máx</sub>',MFmax,''),ro('Factor de calidad','Q ≈ 1/2ζ',z>0?1/(2*z):Infinity,''),
+        ro('Ancho de banda (media potencia)','r<sub>2</sub>−r<sub>1</sub>',hp?r2-r1:NaN,''),ro('ζ recuperado de la banda','(r<sub>2</sub>−r<sub>1</sub>)/2',hp?(r2-r1)/2:NaN,'')],
+      plots:[
+        {series:[{x:t,y:x,color:'accent',width:2,label:'x(t) total'},{x:t,y:xss,color:'s2',dash:true,width:1.5,label:'estado estacionario'}]},
+        {xRange:[0,3],yRange:[0,ym],series:[{x:rr,y:MFc,color:'accent',width:2,label:`ζ = ${z}`}],vlines:[{x:1,label:'r = 1'},...(hp?[{x:r1,color:'s3',label:'r₁',row:1},{x:r2,color:'s3',label:'r₂',row:2}]:[])],
+          bands:hp?[{x:[r1,r2],color:'s3',alpha:.1}]:[],hlines:[{y:1}],markers:[{x:r,y:Math.min(MF,ym*0.98),color:'s2',label:`r = ${r}`}]},
+        {xRange:[0,3],yRange:[0,180],yTicks:[0,45,90,135,180],series:[{x:rr,y:PH,color:'accent',width:2,label:`ζ = ${z}`}],vlines:[{x:1}],hlines:[{y:90}],markers:[{x:r,y:deg(phi),color:'s2',label:`${fmt(deg(phi),3)}°`}]}],
+      csv:{head:['t [s]','x [mm]','x_ss [mm]','F [N]'],cols:[t,x,xss,mapArr(t,tt=>F0*Math.sin(w*tt))]},
+      cursor:tt=>[{x:tt,pts:[{x:tt,y:interp(x,tt,tf)}]},null,null],
+      scene:(cv,tt)=>drawSDOF(cv,{xmm:interp(x,tt,tf),maxmm:A,damper:z>0,force:F0>0?Math.sin(w*tt):null})};
+  }
+};
+
+MODS.base={
+  nav:'Excitación por la base',title:'Movimiento de la base y transmisibilidad',
+  lead:'La base se desplaza como y = Y sen ωt y arrastra la masa a través del resorte y el amortiguador. Por encima de r = √2 el sistema aísla: la masa se mueve menos que la base.',
+  eq:[String.raw`m\ddot x+c(\dot x-\dot y)+k(x-y)=0`,
+      String.raw`T_d=\frac{X}{Y}=\sqrt{\frac{1+(2\zeta r)^{2}}{(1-r^{2})^{2}+(2\zeta r)^{2}}},\qquad \frac{F_T}{kY}=r^{2}T_d`],
+  hint:'fija r = 3 y sube ζ de 0.05 a 0.5. En la zona de aislamiento, más amortiguamiento empeora la transmisibilidad.',
+  params:[...sys(0.1),{group:'Movimiento de la base'},
+    {key:'Y',sym:'Y',label:'Amplitud de la base',unit:'mm',min:0.5,max:30,step:0.5,val:10},
+    {key:'r',sym:'r',label:'Razón de frecuencias ω/ω<sub>n</sub>',unit:'',min:0.05,max:4,step:0.01,val:1.8},...tfP(15)],
+  plots:[{title:'Masa y base en el tiempo',xLabel:'t [s]',yLabel:'desplazamiento [mm]'},{title:'Transmisibilidad de desplazamiento',xLabel:'r = ω/ωₙ',yLabel:'X/Y'}],
+  compute(v){
+    const {m,k,z,r,tf}=v,Y=v.Y/1e3,wn=Math.sqrt(k/m),c=2*z*Math.sqrt(k*m),w=r*wn,n=1500;
+    const s=rk4((t,y)=>{const yb=Y*Math.sin(w*t),yd=Y*w*Math.cos(w*t);return [y[1],(-c*(y[1]-yd)-k*(y[0]-yb))/m];},[0,0],tf,n,subFor(Math.max(wn,w),tf,n));
+    const t=s.t,x=toMM(s.y[0]),yb=mapArr(t,tt=>Y*1e3*Math.sin(w*tt));
+    const TR=trans(r,z),X=Y*TR,FT=k*Y*r*r*TR,phi=Math.atan2(2*z*r**3,1-r*r+(2*z*r)**2);
+    const rr=linspace(0,4,801);
+    const series=famZ.map(zz=>({x:rr,y:mapArr(rr,q=>trans(q,zz)),color:'muted',width:1,alpha:.55}));
+    series[0].label='ζ = 0.05 · 0.1 · 0.25 · 0.5 · 1';
+    series.push({x:rr,y:mapArr(rr,q=>trans(q,z)),color:'accent',width:2.4,label:`ζ = ${z} (actual)`});
+    const iso=r>Math.SQRT2,A=Math.max(absMax(x,yb),1e-9);
+    return {tf,
+      readouts:[{label:'Comportamiento',pill:iso?'Aísla (r > √2)':'Amplifica (r < √2)',tone:iso?'ok':'warn',note:iso?`eficiencia de aislamiento ${fmt((1-TR)*100,3)} %`:'la masa se mueve más que la base'},
+        ro('Frecuencia natural','ω<sub>n</sub>',wn,'rad/s'),ro('Frec. de la base','ω',w,'rad/s'),ro('Transmisibilidad','X/Y',TR,''),
+        ro('Amplitud de la masa','X',X*1e3,'mm'),ro('Fuerza transmitida','F<sub>T</sub>',FT,'N'),ro('Ángulo de fase','φ',deg(phi),'°'),
+        ro('Inicio del aislamiento','√2 ω<sub>n</sub>',Math.SQRT2*wn,'rad/s')],
+      plots:[{series:[{x:t,y:x,color:'accent',width:2,label:'x(t) masa'},{x:t,y:yb,color:'s3',dash:true,width:1.6,label:'y(t) base'}]},
+        {xRange:[0,4],yRange:[0,6],series,vlines:[{x:Math.SQRT2,label:'√2'}],hlines:[{y:1,label:'X/Y = 1'}],markers:[{x:r,y:Math.min(TR,5.9),color:'s2',label:fmt(TR,3)}]}],
+      csv:{head:['t [s]','x [mm]','y [mm]'],cols:[t,x,yb]},
+      cursor:tt=>[{x:tt,pts:[{x:tt,y:interp(x,tt,tf)},{x:tt,y:interp(yb,tt,tf),color:'s3'}]},null],
+      scene:(cv,tt)=>drawSDOF(cv,{xmm:interp(x,tt,tf),ymm:interp(yb,tt,tf),yv:Math.cos(w*tt),maxmm:A,damper:z>0,base:true})};
+  }
+};
+
+MODS.desbalance={
+  nav:'Desbalance rotatorio',title:'Masa desbalanceada en rotación',
+  lead:'Una masa m₀ con excentricidad e gira a velocidad ω dentro de una máquina de masa total M. La fuerza de desbalance crece con ω², así que a alta velocidad la amplitud tiende a m₀e/M.',
+  eq:[String.raw`M\ddot x+c\dot x+kx=m_0 e\,\omega^{2}\operatorname{sen}\omega t`,String.raw`\frac{MX}{m_0 e}=\frac{r^{2}}{\sqrt{(1-r^{2})^{2}+(2\zeta r)^{2}}}`],
+  hint:'barre r de 0.2 a 3 con ζ = 0.1 y observa cómo MX/(m₀e) pasa de casi 0 al pico y luego se acerca a 1.',
+  params:[{group:'Máquina'},
+    {key:'M',sym:'M',label:'Masa total',unit:'kg',min:1,max:100,step:0.5,val:10},
+    {key:'m0',sym:'m<sub>0</sub>',label:'Masa desbalanceada',unit:'kg',min:0.01,max:2,step:0.01,val:0.1},
+    {key:'e',sym:'e',label:'Excentricidad',unit:'mm',min:1,max:200,step:1,val:50},
+    {group:'Soporte'},
+    {key:'k',sym:'k',label:'Rigidez',unit:'N/m',min:10,max:50000,step:10,val:4000},
+    {key:'z',sym:'ζ',label:'Razón de amortiguamiento',unit:'',min:0,max:2,step:0.01,val:0.1},
+    {group:'Operación'},
+    {key:'r',sym:'r',label:'Razón de frecuencias ω/ω<sub>n</sub>',unit:'',min:0.05,max:4,step:0.01,val:0.8},
+    {key:'tf',sym:'t<sub>f</sub>',label:'Duración',unit:'s',min:1,max:30,step:0.5,val:5}],
+  plots:[{title:'Desplazamiento de la máquina',xLabel:'t [s]',yLabel:'x [mm]'},{title:'Respuesta adimensional al desbalance',xLabel:'r = ω/ωₙ',yLabel:'MX/(m₀e)'}],
+  compute(v){
+    const {M,m0,k,z,r,tf}=v,e=v.e/1e3,wn=Math.sqrt(k/M),c=2*z*Math.sqrt(k*M),w=r*wn,Fu=m0*e*w*w,n=1500;
+    const s=rk4((t,y)=>[y[1],(Fu*Math.sin(w*t)-c*y[1]-k*y[0])/M],[0,0],tf,n,subFor(Math.max(wn,w),tf,n));
+    const t=s.t,x=toMM(s.y[0]);
+    const ratio=r*r*amp(r,z),X=m0*e/M*ratio,FT=k*X*Math.hypot(1,2*z*r),phi=phs(r,z);
+    const rr=linspace(0,4,801),f=(q,zz)=>q*q*amp(q,zz);
+    const series=famZ.map(zz=>({x:rr,y:mapArr(rr,q=>f(q,zz)),color:'muted',width:1,alpha:.55}));
+    series[0].label='ζ = 0.05 · 0.1 · 0.25 · 0.5 · 1';
+    series.push({x:rr,y:mapArr(rr,q=>f(q,z)),color:'accent',width:2.4,label:`ζ = ${z} (actual)`});
+    let zone,tone;if(Math.abs(r-1)<=0.05){zone='Velocidad crítica';tone='crit';}else if(r<1){zone='Por debajo de la velocidad crítica';tone='info';}else{zone='Por encima de la velocidad crítica';tone='ok';}
+    const A=Math.max(absMax(x),1e-9);
+    return {tf,
+      readouts:[{label:'Operación',pill:zone,tone,note:`velocidad crítica ${fmt(wn*60/TAU,4)} rpm`},
+        ro('Frecuencia natural','ω<sub>n</sub>',wn,'rad/s'),ro('Velocidad de giro','ω',w,'rad/s'),ro('Velocidad de giro','n',w*60/TAU,'rpm'),
+        ro('Fuerza de desbalance','m<sub>0</sub>eω²',Fu,'N'),ro('Respuesta adimensional','MX/m<sub>0</sub>e',ratio,''),ro('Amplitud','X',X*1e3,'mm'),
+        ro('Fuerza transmitida','F<sub>T</sub>',FT,'N'),ro('Ángulo de fase','φ',deg(phi),'°')],
+      plots:[{series:[{x:t,y:x,color:'accent',width:2,label:'x(t)'}]},
+        {xRange:[0,4],yRange:[0,5],series,hlines:[{y:1,label:'→ 1'}],vlines:[{x:1,label:'r = 1'}],markers:[{x:r,y:Math.min(ratio,4.9),color:'s2',label:fmt(ratio,3)}]}],
+      csv:{head:['t [s]','x [mm]'],cols:[t,x]},
+      cursor:tt=>[{x:tt,pts:[{x:tt,y:interp(x,tt,tf)}]},null],
+      scene:(cv,tt)=>drawSDOF(cv,{xmm:interp(x,tt,tf),maxmm:A,damper:z>0,label:'M',rotor:{theta:w*tt}})};
+  }
+};
+
+MODS.instrumentos={
+  nav:'Instrumentos sísmicos',title:'Vibrómetros y acelerómetros',
+  lead:'Un instrumento sísmico es un sistema masa–resorte dentro de una carcasa fija a la estructura y mide el movimiento relativo z. Con r grande la masa queda casi quieta y z reproduce el desplazamiento (vibrómetro); con r pequeño z es proporcional a la aceleración (acelerómetro).',
+  eq:[String.raw`m\ddot z+c\dot z+kz=-m\ddot y,\qquad z=x-y`,
+      String.raw`\frac{Z}{Y}=\frac{r^{2}}{\sqrt{(1-r^{2})^{2}+(2\zeta r)^{2}}},\qquad \frac{\omega_n^{2}Z}{\omega^{2}Y}=\frac{1}{\sqrt{(1-r^{2})^{2}+(2\zeta r)^{2}}}`],
+  hint:'con ζ ≈ 0.7 el rango útil de ambos instrumentos es el más amplio. Prueba ζ = 0.1 y observa cómo se estrecha.',
+  params:[{group:'Instrumento'},
+    {key:'fni',sym:'f<sub>n</sub>',label:'Frecuencia natural',unit:'Hz',min:1,max:1000,step:1,val:20},
+    {key:'z',sym:'ζ',label:'Razón de amortiguamiento',unit:'',min:0,max:1,step:0.01,val:0.7},
+    {group:'Vibración medida'},
+    {key:'r',sym:'r',label:'Razón de frecuencias f/f<sub>n</sub>',unit:'',min:0.05,max:10,step:0.01,val:4},
+    {key:'Y',sym:'Y',label:'Amplitud de la estructura',unit:'mm',min:0.1,max:10,step:0.1,val:2}],
+  plots:[{title:'Respuesta como vibrómetro',xLabel:'r',yLabel:'Z/Y'},{title:'Respuesta como acelerómetro',xLabel:'r',yLabel:'ωₙ²Z/(ω²Y)'},{title:'Movimiento de la estructura y lectura relativa',xLabel:'t [s]',yLabel:'[mm]',full:true}],
+  compute(v){
+    const {fni,z,r,Y}=v,f=r*fni,w=TAU*f,ZY=r*r*amp(r,z),acc=amp(r,z),phi=phs(r,z);
+    let rmin=0.05;for(let q=20;q>=0.05;q-=0.005){if(Math.abs(q*q*amp(q,z)-1)>0.05){rmin=q+0.005;break;}}
+    let rmax=NaN;for(let q=0;q<=5;q+=0.001){if(Math.abs(amp(q,z)-1)>0.05){rmax=q-0.001;break;}}
+    const rv=linspace(0,6,601),ra=linspace(0,2,401),fam=[0,0.25,0.5,0.7,1];
+    const sv=fam.map(zz=>({x:rv,y:mapArr(rv,q=>q*q*amp(q,zz)),color:'muted',width:1,alpha:.55}));sv[0].label='ζ = 0 · 0.25 · 0.5 · 0.7 · 1';sv.push({x:rv,y:mapArr(rv,q=>q*q*amp(q,z)),color:'accent',width:2.4,label:`ζ = ${z}`});
+    const sa=fam.map(zz=>({x:ra,y:mapArr(ra,q=>amp(q,zz)),color:'muted',width:1,alpha:.55}));sa.push({x:ra,y:mapArr(ra,q=>amp(q,z)),color:'accent',width:2.4,label:`ζ = ${z}`});
+    const fv=visF(f),T=1/f,tf=3/fv,tr=linspace(0,3*T,601),yb=mapArr(tr,tt=>Y*Math.sin(w*tt)),zz=mapArr(tr,tt=>-ZY*Y*Math.sin(w*tt-phi));
+    const vib=r>=rmin,ac=isFinite(rmax)&&r<=rmax,toReal=tt=>tt*fv/f;
+    return {tf,
+      readouts:[{label:'Uso',pill:vib?'Sirve como vibrómetro (error ≤ 5 %)':ac?'Sirve como acelerómetro (error ≤ 5 %)':'Fuera del rango útil',tone:vib||ac?'ok':'warn',
+          note:`vibrómetro: f ≥ ${fmt(rmin*fni,3)} Hz · acelerómetro: f ≤ ${isFinite(rmax)?fmt(rmax*fni,3):'—'} Hz`},
+        ro('Frecuencia medida','f',f,'Hz'),ro('Razón vibrómetro','Z/Y',ZY,''),ro('Error como vibrómetro','',(ZY-1)*100,'%'),
+        ro('Razón acelerómetro','ω<sub>n</sub>²Z/ω²Y',acc,''),ro('Error como acelerómetro','',(acc-1)*100,'%'),ro('Retraso de fase','φ',deg(phi),'°'),
+        ro('Lectura relativa','Z',ZY*Y,'mm')],
+      plots:[{xRange:[0,6],yRange:[0,3],series:sv,bands:[{y:[0.95,1.05],color:'ok',alpha:.18}],hlines:[{y:1}],vlines:[{x:rmin,color:'s3',label:'rango útil →'}],markers:[{x:r,y:Math.min(ZY,2.95),color:'s2',label:fmt(ZY,3)}]},
+        {xRange:[0,2],yRange:[0,3],series:sa,bands:[{y:[0.95,1.05],color:'ok',alpha:.18}],hlines:[{y:1}],vlines:isFinite(rmax)?[{x:rmax,color:'s3',label:'← rango útil'}]:[],markers:r<=2?[{x:r,y:Math.min(acc,2.95),color:'s2',label:fmt(acc,3)}]:[]},
+        {series:[{x:tr,y:yb,color:'s3',width:2,label:'y(t) estructura'},{x:tr,y:zz,color:'accent',width:2,label:'z(t) lectura'}]}],
+      csv:{head:['t [s]','y [mm]','z [mm]'],cols:[tr,yb,zz]},
+      cursor:tt=>{const q=toReal(tt);return [null,null,{x:q,pts:[{x:q,y:Y*Math.sin(w*q),color:'s3'},{x:q,y:-ZY*Y*Math.sin(w*q-phi)}]}];},
+      scene:(cv,tt)=>{const q=toReal(tt);drawInstrument(cv,{ymm:Y*Math.sin(w*q),yv:Math.cos(w*q),zmm:-ZY*Y*Math.sin(w*q-phi),maxmm:Math.max(Y,ZY*Y),note:f>fv*1.01?`f real ${fmt(f,4)} Hz · animación ralentizada`:''});}};
+  }
+};
+
+MODS.pulsos={
+  nav:'Pulsos y espectro de choque',title:'Impulso, escalón, pulsos y espectro de choque',
+  lead:'Para una fuerza arbitraria la respuesta es la integral de convolución de Duhamel. El espectro de choque resume el máximo de la respuesta en función de la duración del pulso respecto al periodo natural.',
+  eq:[String.raw`x(t)=\frac{1}{m\omega_d}\int_0^{t}F(\tau)\,e^{-\zeta\omega_n(t-\tau)}\operatorname{sen}\omega_d(t-\tau)\,d\tau`,
+      String.raw`\text{impulso } I:\ x(t)=\frac{I}{m\omega_d}e^{-\zeta\omega_n t}\operatorname{sen}\omega_d t`,String.raw`\text{escalón: } x_{\max}=2\,\delta_{st}\quad(\zeta=0)`],
+  hint:'con el pulso rectangular busca t₀/Tₙ = 0.5: el máximo llega a 2 δst. Con t₀/Tₙ muy pequeño el pulso actúa como un impulso.',
+  params:[{group:'Carga'},
+    {key:'tipo',type:'select',label:'Tipo de excitación',options:[['imp','Impulso ideal'],['esc','Escalón'],['rect','Pulso rectangular'],['seno','Pulso de medio seno'],['tri','Pulso triangular'],['rampa','Rampa (tiempo de subida)']],val:'rect'},
+    {key:'F0',sym:'F<sub>0</sub>',label:'Fuerza máxima',unit:'N',min:0.1,max:20,step:0.1,val:2,dep:v=>v.tipo!=='imp'},
+    {key:'t0',sym:'t<sub>0</sub>',label:'Duración o tiempo de subida',unit:'s',min:0.01,max:5,step:0.01,val:0.5,dep:v=>!['imp','esc'].includes(v.tipo)},
+    {key:'I',sym:'I',label:'Impulso',unit:'N·s',min:0.01,max:5,step:0.01,val:0.5,dep:v=>v.tipo==='imp'},
+    ...sys(0),...tfP(8,30)],
+  plots:[{title:'Respuesta x(t)',xLabel:'t [s]',yLabel:'x [mm]',full:true},{title:'Fuerza aplicada',xLabel:'t [s]',yLabel:'F [N]'},{title:'Espectro de choque',xLabel:'t₀ / Tₙ',yLabel:'xmáx / δst'}],
+  srsCache:{},
+  srs(tipo,z){
+    const key=tipo+'|'+z;if(this.srsCache[key])return this.srsCache[key];
+    const q=linspace(0.05,4,80),out=new Float64Array(q.length),wn=1,Tn=TAU;
+    q.forEach((qq,i)=>{const t0=qq*Tn,F=pulseF(tipo,1,t0),tf=t0+1.05*Tn,n=300,s=rk4((t,y)=>[y[1],F(t)-2*z*wn*y[1]-wn*wn*y[0]],[0,0],tf,n,subFor(wn,tf,n));out[i]=absMax(s.y[0]);});
+    return this.srsCache[key]={q,y:out};
+  },
+  compute(v){
+    const {m,k,z,tf,tipo}=v,wn=Math.sqrt(k/m),Tn=TAU/wn,c=2*z*Math.sqrt(k*m),n=1500,F0=v.F0,t0=v.t0;
+    const F=tipo==='imp'?()=>0:pulseF(tipo,F0,t0);
+    const y0=tipo==='imp'?[0,v.I/m]:[0,0];
+    const s=rk4((t,y)=>[y[1],(F(t)-c*y[1]-k*y[0])/m],y0,tf,n,subFor(wn,tf,n));
+    const t=s.t,x=toMM(s.y[0]),Ft=mapArr(t,F);
+    let im=0;for(let i=1;i<x.length;i++)if(Math.abs(x[i])>Math.abs(x[im]))im=i;
+    const dst=F0/k*1e3,xmax=Math.abs(x[im]);
+    const impulse={imp:v.I,esc:NaN,rect:F0*t0,seno:2*F0*t0/Math.PI,tri:F0*t0/2,rampa:NaN}[tipo];
+    const pulse=['rect','seno','tri','rampa'].includes(tipo);
+    let srsPlot;
+    if(pulse){const S=this.srs(tipo,z);srsPlot={xRange:[0,4],yZero:true,series:[{x:S.q,y:S.y,color:'accent',width:2.2,label:`ζ = ${z}`}],hlines:[{y:2,label:'2'},{y:1}],markers:[{x:t0/Tn,y:xmax/dst,color:'s2',label:fmt(xmax/dst,3)}]};}
+    else srsPlot={empty:tipo==='esc'?'Un escalón no tiene duración finita: su factor de carga dinámica es 2 sin amortiguamiento.':'El impulso ideal es el límite t₀ → 0 de cualquier pulso. Elige un pulso para ver su espectro de choque.'};
+    const A=Math.max(absMax(x),1e-9),Fmax=Math.max(absMax(Ft),1e-9);
+    return {tf,
+      readouts:[{label:'Carga',pill:{imp:'Impulso ideal en t = 0',esc:'Escalón',rect:'Pulso rectangular',seno:'Pulso de medio seno',tri:'Pulso triangular',rampa:'Rampa'}[tipo],tone:'info',
+          note:pulse?`t₀/Tₙ = ${fmt(t0/Tn,3)}`:''},
+        ro('Periodo natural','T<sub>n</sub>',Tn,'s'),ro('Deflexión estática','δ<sub>st</sub>',tipo==='imp'?NaN:dst,'mm'),ro('Respuesta máxima','x<sub>máx</sub>',xmax,'mm'),
+        ro('Instante del máximo','t<sub>máx</sub>',t[im],'s'),ro('Factor de carga dinámica','x<sub>máx</sub>/δ<sub>st</sub>',tipo==='imp'?NaN:xmax/dst,''),
+        ro('Impulso aplicado','∫F dt',impulse,'N·s'),ro('Máximo teórico (ζ = 0)','I/(mω<sub>n</sub>)',tipo==='imp'?v.I/(m*wn)*1e3:NaN,'mm')],
+      plots:[{series:[{x:t,y:x,color:'accent',width:2,label:'x(t)'}],markers:[{x:t[im],y:x[im],color:'s2',label:`máx ${fmt(xmax,3)} mm`}]},
+        tipo==='imp'?{xRange:[-0.02*tf,tf],yRange:[0,1.2],series:[{x:Float64Array.from([0]),y:Float64Array.from([1]),color:'s2',stem:true,r:4,label:`I = ${v.I} N·s en t = 0`}]}:{yZero:true,series:[{x:t,y:Ft,color:'s2',width:2,label:'F(t)'}]},
+        srsPlot],
+      csv:{head:['t [s]','F [N]','x [mm]'],cols:[t,Ft,x]},
+      cursor:tt=>[{x:tt,pts:[{x:tt,y:interp(x,tt,tf)}]},tipo==='imp'?null:{x:tt,pts:[{x:tt,y:F(tt),color:'s2'}]},null],
+      scene:(cv,tt)=>drawSDOF(cv,{xmm:interp(x,tt,tf),maxmm:A,damper:z>0,force:tipo==='imp'?(tt<0.06*tf?1:null):F(tt)/Fmax})};
+  }
+};
+
+MODS.periodica={
+  nav:'Fuerza periódica',title:'Respuesta a una fuerza periódica',
+  lead:'La fuerza se descompone en armónicos y, por superposición, la respuesta estacionaria es la suma de la respuesta a cada armónico. Un armónico alto puede entrar en resonancia aunque la frecuencia fundamental esté lejos de ωₙ.',
+  eq:[String.raw`F(t)=\frac{a_0}{2}+\sum_{n}\left(a_n\cos n\omega_0 t+b_n\operatorname{sen} n\omega_0 t\right),\qquad r_n=\frac{n\omega_0}{\omega_n}`,
+      String.raw`x_{ss}(t)=\frac{a_0}{2k}+\sum_{n}\frac{a_n\cos(n\omega_0 t-\phi_n)+b_n\operatorname{sen}(n\omega_0 t-\phi_n)}{k\sqrt{(1-r_n^{2})^{2}+(2\zeta r_n)^{2}}}`],
+  hint:'onda cuadrada con ω₀/ωₙ = 0.333: el tercer armónico resuena y domina la respuesta aunque la fuerza fundamental sea lenta.',
+  params:[{group:'Fuerza'},
+    {key:'forma',type:'select',label:'Forma de onda',options:waveOpts,val:'cuadrada'},
+    {key:'d',sym:'d',label:'Ciclo de trabajo',unit:'',min:0.05,max:0.95,step:0.01,val:0.25,dep:v=>v.forma==='pulsos'},
+    {key:'F0',sym:'F<sub>0</sub>',label:'Amplitud',unit:'N',min:0.1,max:20,step:0.1,val:2},
+    {key:'r0',sym:'ω<sub>0</sub>/ω<sub>n</sub>',label:'Fundamental relativa',unit:'',min:0.05,max:3,step:0.001,val:0.333},
+    {key:'N',sym:'N',label:'Armónicos considerados',unit:'',min:1,max:40,step:1,val:15},
+    ...sys(0.05)],
+  plots:[{title:'Respuesta estacionaria x(t)',xLabel:'t [s]',yLabel:'x [mm]',full:true},{title:'Fuerza: exacta y serie',xLabel:'t [s]',yLabel:'F [N]'},{title:'Contribución de cada armónico',xLabel:'armónico n',yLabel:'|Xₙ| [mm]'}],
+  compute(v){
+    const {m,k,z,F0,r0,N}=v,wn=Math.sqrt(k/m),w0=r0*wn,T0=TAU/w0,tf=3*T0,n=1500,Fs=fourier(v.forma,F0,v.d,N);
+    const t=linspace(0,tf,n+1),Fex=mapArr(t,tt=>Fs.f(tt/T0));
+    const H=[],ph=[];for(let j=1;j<=N;j++){H.push(amp(j*r0,z));ph.push(phs(j*r0,z));}
+    const Fser=tt=>{let s=Fs.c0;for(let j=1;j<=N;j++)s+=Fs.a[j]*Math.cos(j*w0*tt)+Fs.b[j]*Math.sin(j*w0*tt);return s;};
+    const X=tt=>{let s=Fs.c0/k;for(let j=1;j<=N;j++)s+=H[j-1]/k*(Fs.a[j]*Math.cos(j*w0*tt-ph[j-1])+Fs.b[j]*Math.sin(j*w0*tt-ph[j-1]));return s*1e3;};
+    const x=mapArr(t,X),Fsr=mapArr(t,Fser);
+    const js=Float64Array.from({length:N},(_,i)=>i+1),Xn=Float64Array.from({length:N},(_,i)=>Math.hypot(Fs.a[i+1],Fs.b[i+1])*H[i]/k*1e3);
+    let jd=0;for(let i=1;i<N;i++)if(Xn[i]>Xn[jd])jd=i;
+    const tot=Math.sqrt(Xn.reduce((s,q)=>s+q*q,0)),A=Math.max(absMax(x),1e-9),Fm=Math.max(absMax(Fex),1e-9);
+    let rms=0;const nn=Math.floor(n/3);for(let i=0;i<nn;i++)rms+=(x[i]-Fs.c0/k*1e3)**2;rms=Math.sqrt(rms/nn);
+    const nres=1/r0;
+    return {tf,
+      readouts:[{label:'Armónico dominante',pill:`n = ${jd+1} domina la respuesta`,tone:Math.abs((jd+1)*r0-1)<0.08?'crit':'info',note:`el armónico n ≈ ${fmt(nres,3)} coincide con ωₙ`},
+        ro('Frecuencia fundamental','ω<sub>0</sub>',w0,'rad/s'),ro('Periodo','T<sub>0</sub>',T0,'s'),ro('Frecuencia natural','ω<sub>n</sub>',wn,'rad/s'),
+        ro('Amplitud del armónico dominante','|X<sub>n</sub>|',Xn[jd],'mm'),ro('Participación en la energía','',tot>0?(Xn[jd]/tot)**2*100:NaN,'%'),
+        ro('Desplazamiento medio','a<sub>0</sub>/2k',Fs.c0/k*1e3,'mm'),ro('Pico de la respuesta','x<sub>máx</sub>',A,'mm'),ro('Valor RMS (sin la media)','x<sub>rms</sub>',rms,'mm')],
+      plots:[{series:[{x:t,y:x,color:'accent',width:2,label:'x_ss(t)'}]},
+        {series:[{x:t,y:Fex,color:'muted',width:1.5,label:'exacta'},{x:t,y:Fsr,color:'s2',width:1.8,label:`serie, N = ${N}`}]},
+        {xRange:[0.4,N+0.6],yZero:true,series:[{x:js,y:Xn,color:'accent',stem:true,label:'|Xₙ|'}],vlines:nres<=N+0.5?[{x:nres,color:'crit',label:'rₙ = 1'}]:[]}],
+      csv:{head:['t [s]','F [N]','x [mm]'],cols:[t,Fex,x]},
+      cursor:tt=>[{x:tt,pts:[{x:tt,y:X(tt)}]},{x:tt,pts:[{x:tt,y:Fser(tt),color:'s2'}]},null],
+      scene:(cv,tt)=>drawSDOF(cv,{xmm:X(tt),maxmm:A,damper:z>0,force:Fs.f(tt/T0)/Fm})};
+  }
+};
+
+MODS['2gdl']={
+  nav:'Dos grados de libertad',title:'Sistemas de dos grados de libertad',
+  lead:'Dos masas acopladas por resortes. El sistema tiene dos frecuencias naturales y dos formas de modo; cualquier vibración libre es una combinación de ambas.',
+  eq:[String.raw`[M]\{\ddot x\}+[C]\{\dot x\}+[K]\{x\}=\{F\}`,
+      String.raw`[K]=\begin{bmatrix}k_1+k_2 & -k_2\\ -k_2 & k_2+k_3\end{bmatrix},\qquad \det\!\left([K]-\omega^{2}[M]\right)=0`,
+      String.raw`\rho_i=\frac{X_2}{X_1}=\frac{k_1+k_2-m_1\omega_i^{2}}{k_2}`],
+  hint:'pulsa “CI = modo 1”: ambas masas oscilan juntas a ω₁ sin mezclarse con el otro modo. Luego prueba “Solo x₁” y verás la superposición de los dos.',
+  params:[{group:'Masas'},
+    {key:'m1',sym:'m<sub>1</sub>',label:'Masa 1',unit:'kg',min:0.1,max:20,step:0.1,val:1},
+    {key:'m2',sym:'m<sub>2</sub>',label:'Masa 2',unit:'kg',min:0.1,max:20,step:0.1,val:1},
+    {group:'Resortes y amortiguadores'},
+    {key:'k1',sym:'k<sub>1</sub>',label:'Pared – m₁',unit:'N/m',min:0,max:2000,step:1,val:40},
+    {key:'k2',sym:'k<sub>2</sub>',label:'m₁ – m₂',unit:'N/m',min:1,max:2000,step:1,val:40},
+    {key:'k3',sym:'k<sub>3</sub>',label:'m₂ – pared',unit:'N/m',min:0,max:2000,step:1,val:40},
+    {key:'c1',sym:'c<sub>1</sub>',label:'Pared – m₁',unit:'N·s/m',min:0,max:20,step:0.1,val:0},
+    {key:'c2',sym:'c<sub>2</sub>',label:'m₁ – m₂',unit:'N·s/m',min:0,max:20,step:0.1,val:0},
+    {group:'Condiciones iniciales (v₀ = 0)'},
+    {key:'x10',sym:'x<sub>1,0</sub>',label:'Desplazamiento m₁',unit:'mm',min:-30,max:30,step:0.5,val:10},
+    {key:'x20',sym:'x<sub>2,0</sub>',label:'Desplazamiento m₂',unit:'mm',min:-30,max:30,step:0.5,val:0},
+    {group:'Fuerza en m₁'},
+    {key:'forced',type:'bool',label:'Aplicar F₀ sen ωt sobre m₁',val:false},
+    {key:'F0',sym:'F<sub>0</sub>',label:'Amplitud',unit:'N',min:0,max:20,step:0.1,val:1,dep:v=>v.forced},
+    {key:'w',sym:'ω',label:'Frecuencia',unit:'rad/s',min:0.1,max:100,step:0.1,val:8,dep:v=>v.forced},...tfP(20)],
+  actions:[{label:'CI = modo 1',run:M=>icMode(M,1)},{label:'CI = modo 2',run:M=>icMode(M,2)},{label:'Solo x₁',run:M=>{M.set('x10',10);M.set('x20',0);}}],
+  plots:[{title:'Desplazamientos x₁(t) y x₂(t)',xLabel:'t [s]',yLabel:'x [mm]',full:true},
+         {title:'Respuesta en frecuencia (fuerza en m₁)',xLabel:'ω [rad/s]',yLabel:'|X/F₀| [mm/N]',yLog:true},{title:'Formas de modo',xLabel:'posición',yLabel:'amplitud normalizada'}],
+  modal(v){
+    const {m1,m2,k1,k2,k3}=v,a=m1*m2,b=-(m1*(k2+k3)+m2*(k1+k2)),c=(k1+k2)*(k2+k3)-k2*k2,disc=Math.max(0,b*b-4*a*c);
+    const w1s=Math.max(0,(-b-Math.sqrt(disc))/(2*a)),w2s=(-b+Math.sqrt(disc))/(2*a),rho=ws=>(k1+k2-m1*ws)/k2;
+    return {w1:Math.sqrt(w1s),w2:Math.sqrt(w2s),r1:rho(w1s),r2:rho(w2s)};
+  },
+  compute(v){
+    const {m1,m2,k1,k2,k3,c1,c2,tf}=v,F0=v.forced?v.F0:0,w=v.w,n=1500,{w1,w2,r1,r2}=this.modal(v);
+    const s=rk4((t,y)=>{const F=F0*Math.sin(w*t),[x1,x2,u1,u2]=y;
+      return [u1,u2,(F-(c1+c2)*u1+c2*u2-(k1+k2)*x1+k2*x2)/m1,(c2*u1-c2*u2+k2*x1-(k2+k3)*x2)/m2];},
+      [v.x10/1e3,v.x20/1e3,0,0],tf,n,subFor(Math.max(w2,v.forced?w:0),tf,n));
+    const t=s.t,x1=toMM(s.y[0]),x2=toMM(s.y[1]);
+    const frf=om=>{const re11=k1+k2-m1*om*om,im11=om*(c1+c2),re12=-k2,im12=-om*c2,re22=k2+k3-m2*om*om,im22=om*c2;
+      const dRe=re11*re22-im11*im22-(re12*re12-im12*im12),dIm=re11*im22+im11*re22-2*re12*im12,dm=Math.hypot(dRe,dIm);
+      return [Math.hypot(re22,im22)/dm*1e3,Math.hypot(re12,im12)/dm*1e3];};
+    const Wmax=Math.max(1.5*w2,v.forced?1.15*w:0,1),N=900,om=linspace(Wmax/N,Wmax,N);
+    const A1=new Float64Array(N),A2=new Float64Array(N);for(let i=0;i<N;i++){const q=frf(om[i]);A1[i]=q[0];A2[i]=q[1];}
+    const ss=v.forced?frf(w):[NaN,NaN];
+    const norm=(a,b)=>{const mx=Math.max(Math.abs(a),Math.abs(b))||1;return [a/mx,b/mx];};
+    const s1=norm(1,r1),s2=norm(1,r2),end=k3>0?3:2;
+    const shape=sv=>{const xs=[0,1,2],ys=[k1>0?0:NaN,sv[0],sv[1]];if(k3>0){xs.push(3);ys.push(0);}return {x:Float64Array.from(xs),y:Float64Array.from(ys)};};
+    const sh1=shape(s1),sh2=shape(s2),rigid=w1<1e-6,A=Math.max(absMax(x1,x2),1e-9);
+    return {tf,
+      readouts:[{label:'Estado',pill:rigid?'Modo de cuerpo rígido (ω₁ = 0)':v.forced?'Vibración forzada':'Vibración libre',tone:rigid?'warn':v.forced?'info':'ok',
+          note:v.forced?`excitación a ${fmt(w,3)} rad/s`:'respuesta a las condiciones iniciales'},
+        ro('1.ª frecuencia natural','ω<sub>1</sub>',w1,'rad/s'),ro('2.ª frecuencia natural','ω<sub>2</sub>',w2,'rad/s'),
+        ro('1.ª frecuencia natural','f<sub>1</sub>',w1/TAU,'Hz'),ro('2.ª frecuencia natural','f<sub>2</sub>',w2/TAU,'Hz'),
+        ro('Modo 1: X₂/X₁','ρ<sub>1</sub>',r1,''),ro('Modo 2: X₂/X₁','ρ<sub>2</sub>',r2,''),
+        ro('Amplitud estacionaria m₁','X<sub>1</sub>',v.forced?ss[0]*F0:NaN,'mm'),ro('Amplitud estacionaria m₂','X<sub>2</sub>',v.forced?ss[1]*F0:NaN,'mm')],
+      plots:[
+        {series:[{x:t,y:x1,color:'accent',width:2,label:'x₁(t)'},{x:t,y:x2,color:'s2',width:2,label:'x₂(t)'}]},
+        {xRange:[0,Wmax],series:[{x:om,y:A1,color:'accent',width:2,label:'|X₁/F₀|'},{x:om,y:A2,color:'s2',width:2,label:'|X₂/F₀|'}],vlines:[{x:w1,color:'accent',label:'ω₁'},{x:w2,color:'s2',label:'ω₂'}],
+          markers:v.forced?[{x:w,y:ss[0],color:'accent'},{x:w,y:ss[1],color:'s2',label:`ω = ${w}`}]:[]},
+        {xRange:[-0.15,end+0.15],yRange:[-1.25,1.25],xTicks:k3>0?[0,1,2,3]:[0,1,2],xTickFmt:q=>({0:'pared',1:'m₁',2:'m₂',3:'pared'})[q],
+          series:[{x:sh1.x,y:sh1.y,color:'accent',width:2.2,label:`modo 1 · ω₁ = ${fmt(w1,3)}`},{x:sh2.x,y:sh2.y,color:'s2',width:2.2,label:`modo 2 · ω₂ = ${fmt(w2,3)}`}],
+          hlines:[{y:0}],markers:[{x:1,y:s1[0],color:'accent',r:4},{x:2,y:s1[1],color:'accent',r:4},{x:1,y:s2[0],color:'s2',r:4},{x:2,y:s2[1],color:'s2',r:4}]}],
+      csv:{head:['t [s]','x1 [mm]','x2 [mm]'],cols:[t,x1,x2]},
+      cursor:tt=>[{x:tt,pts:[{x:tt,y:interp(x1,tt,tf)},{x:tt,y:interp(x2,tt,tf),color:'s2'}]},null,null],
+      scene:(cv,tt)=>draw2DOF(cv,{x1:interp(x1,tt,tf),x2:interp(x2,tt,tf),maxmm:A,k1,k2,k3,c1,c2,force:F0>0?Math.sin(w*tt):null})};
+  }
+};
+function icMode(M,which){const md=MODS['2gdl'].modal(M.v),rho=which===1?md.r1:md.r2;let a=10,c=a*rho;if(Math.abs(c)>30){a=30/Math.abs(rho);c=Math.sign(rho)*30;}M.set('x10',+a.toFixed(4));M.set('x20',+c.toFixed(4));}
+
+MODS.ngdl={
+  nav:'Cadena de n GDL',title:'Sistemas de n grados de libertad',
+  lead:'Una cadena de n masas unidas por resortes. El problema de valores propios da n frecuencias naturales y n formas de modo; en la cadena uniforme el modo j tiene j − 1 nodos. Al crecer n la cadena se aproxima a una barra continua.',
+  eq:[String.raw`\left([K]-\omega^{2}[M]\right)\{\phi\}=\{0\}`,String.raw`\text{cadena uniforme fija–libre: }\ \omega_j=2\sqrt{\frac{k}{m}}\,\operatorname{sen}\frac{(2j-1)\pi}{2(2n+1)}`],
+  hint:'pon n = 8 y recorre los modos contando nodos. Luego cambia la masa del extremo a 3 y observa cómo baja el primer modo.',
+  params:[{group:'Cadena'},
+    {key:'n',sym:'n',label:'Número de masas',unit:'',min:2,max:8,step:1,val:4},
+    {key:'m',sym:'m',label:'Masa de cada elemento',unit:'kg',min:0.1,max:10,step:0.1,val:1},
+    {key:'k',sym:'k',label:'Rigidez de cada resorte',unit:'N/m',min:1,max:2000,step:1,val:100},
+    {key:'cc',type:'select',label:'Condiciones de borde',options:[['fl','Fija – libre'],['ff','Fija – fija'],['ll','Libre – libre']],val:'fl'},
+    {key:'mf',sym:'m<sub>n</sub>/m',label:'Masa del último elemento',unit:'×',min:0.2,max:5,step:0.1,val:1},
+    {group:'Visualización'},
+    {key:'j',sym:'j',label:'Modo animado',unit:'',min:1,max:8,step:1,val:1}],
+  plots:[{title:'Frecuencias naturales',xLabel:'modo j',yLabel:'ωⱼ [rad/s]'},{title:'Forma del modo animado',xLabel:'posición de la masa',yLabel:'φ normalizada'}],
+  compute(v){
+    const n=v.n,{m,k,cc}=v,j=Math.min(v.j,n),ms=Array.from({length:n},(_,i)=>i===n-1?m*v.mf:m);
+    const K=Array.from({length:n},()=>new Array(n).fill(0));
+    const ground=i=>{K[i][i]+=k;},link=(i,q)=>{K[i][i]+=k;K[q][q]+=k;K[i][q]-=k;K[q][i]-=k;};
+    if(cc!=='ll')ground(0);for(let i=0;i<n-1;i++)link(i,i+1);if(cc==='ff')ground(n-1);
+    const Ah=K.map((r,a)=>r.map((q,b)=>q/Math.sqrt(ms[a]*ms[b])));
+    const E=jacobiEig(Ah),om=E.vals.map(l=>Math.sqrt(Math.max(0,l)));
+    const shapes=E.vecs.map(vv=>peakNormalize(Float64Array.from(vv.map((q,i)=>q/Math.sqrt(ms[i])))));
+    const sh=shapes[j-1],wj=om[j-1],fj=wj/TAU;
+    const jj=Float64Array.from(om.map((_,i)=>i+1)),omA=Float64Array.from(om);
+    let ana=null;
+    if(v.mf===1){const s=Math.sqrt(k/m);ana=Float64Array.from(om.map((_,i)=>{const q=i+1;return cc==='fl'?2*s*Math.sin((2*q-1)*Math.PI/(2*(2*n+1))):cc==='ff'?2*s*Math.sin(q*Math.PI/(2*(n+1))):2*s*Math.sin((q-1)*Math.PI/(2*n));}));}
+    const xs=[],ys=[];if(cc!=='ll'){xs.push(0);ys.push(0);}for(let i=0;i<n;i++){xs.push(i+1);ys.push(sh[i]);}if(cc==='ff'){xs.push(n+1);ys.push(0);}
+    const fv=fj>1e-6?visF(fj):0.5,rigid=om[0]<1e-6;
+    return {tf:4/fv,
+      readouts:[{label:'Modo',pill:`Modo ${j} de ${n}`,tone:'info',note:`${countNodes(Float64Array.from(ys))} nodos internos${rigid&&j===1?' · modo de cuerpo rígido':''}`},
+        ro('Frecuencia del modo','ω<sub>j</sub>',wj,'rad/s'),ro('Frecuencia del modo','f<sub>j</sub>',fj,'Hz'),ro('Primera frecuencia','ω<sub>1</sub>',om[0],'rad/s'),ro('Frecuencia más alta','ω<sub>n</sub>',om[n-1],'rad/s'),
+        ro('Todas las frecuencias naturales','',om.map(q=>fmt(q/TAU,3)).join(' · ')+' Hz','',{wide:true})],
+      plots:[{xRange:[0.5,n+0.5],yZero:true,xTicks:Array.from({length:n},(_,i)=>i+1),series:[...(ana?[{x:jj,y:ana,color:'s2',dash:true,width:1.4,label:'fórmula analítica'}]:[]),{x:jj,y:omA,color:'accent',dots:true,r:5,label:'valores propios'}],markers:[{x:j,y:wj,color:'s2',r:6}]},
+        {xRange:[-0.3,(cc==='ff'?n+1:n)+0.3],yRange:[-1.25,1.25],xTicks:Array.from({length:(cc==='ff'?n+2:n+1)},(_,i)=>i),xTickFmt:q=>q===0?(cc==='ll'?'':'pared'):q===n+1?'pared':String(q),
+          series:[{x:Float64Array.from(xs),y:Float64Array.from(ys),color:'accent',width:2.2,label:`modo ${j}`},{x:Float64Array.from(xs),y:Float64Array.from(ys),color:'accent',dots:true,r:4}],hlines:[{y:0}]}],
+      cursor:()=>[null,null],
+      scene:(cv,tt)=>drawChain(cv,{n,cc,heavyLast:v.mf!==1,disp:Array.from(sh,q=>q*Math.sin(TAU*fv*tt)),note:fj>fv*1.01?`fⱼ = ${fmt(fj,4)} Hz · animación ralentizada`:''})};
+  }
+};
+
+MODS.aislamiento={
+  nav:'Aislamiento',title:'Diseño de aisladores para una máquina',
+  lead:'Una máquina con desbalance se monta sobre N soportes elásticos. Se busca la rigidez que logra el porcentaje de aislamiento pedido a la velocidad de operación y se verifica el paso por resonancia durante el arranque.',
+  eq:[String.raw`T=\frac{F_T}{F_0}=\sqrt{\frac{1+(2\zeta r)^{2}}{(1-r^{2})^{2}+(2\zeta r)^{2}}},\qquad \text{aislamiento}=(1-T)\cdot100\ \%`,
+      String.raw`\omega_n\le\frac{\omega_{op}}{r_{req}},\qquad k_{\text{soporte}}=\frac{M\omega_n^{2}}{N},\qquad \delta_{st}=\frac{g}{\omega_n^{2}}`],
+  hint:'pulsa “Usar k recomendado” y luego alarga el arranque: con arranques lentos la máquina pasa más tiempo cerca de la resonancia y la amplitud transitoria crece.',
+  params:[{group:'Máquina'},
+    {key:'M',sym:'M',label:'Masa de la máquina',unit:'kg',min:10,max:2000,step:10,val:200},
+    {key:'rpm',sym:'n',label:'Velocidad de operación',unit:'rpm',min:300,max:6000,step:10,val:1800},
+    {key:'m0e',sym:'m<sub>0</sub>e',label:'Desbalance',unit:'kg·mm',min:1,max:5000,step:1,val:200},
+    {group:'Requisito'},
+    {key:'iso',sym:'',label:'Aislamiento requerido',unit:'%',min:50,max:99,step:1,val:90},
+    {group:'Soportes'},
+    {key:'N',sym:'N',label:'Número de soportes',unit:'',min:1,max:8,step:1,val:4},
+    {key:'ks',sym:'k<sub>s</sub>',label:'Rigidez de cada soporte',unit:'N/mm',min:1,max:3000,step:1,val:400},
+    {key:'z',sym:'ζ',label:'Amortiguamiento de los soportes',unit:'',min:0,max:0.3,step:0.005,val:0.05},
+    {group:'Arranque'},
+    {key:'tr',sym:'t<sub>a</sub>',label:'Tiempo de arranque',unit:'s',min:0.5,max:20,step:0.5,val:5}],
+  actions:[{label:'Usar k recomendado',run:M=>{const d=MODS.aislamiento.design(M.v);if(isFinite(d.ksReq))M.set('ks',Math.max(1,Math.floor(d.ksReq*0.97)));}}],
+  plots:[{title:'Transmisibilidad de fuerza',xLabel:'f [Hz]',yLabel:'T = F_T/F₀',yLog:true},{title:'Arranque: paso por resonancia',xLabel:'t [s]',yLabel:'x [mm]'}],
+  design(v){
+    const wop=v.rpm*TAU/60,T=1-v.iso/100,z=v.z;
+    if(trans(60,z)>T)return {rReq:NaN,wnReq:NaN,ksReq:NaN,dst:NaN,wop,T};
+    const rReq=bisect(q=>trans(q,z)-T,Math.SQRT2,60),wnReq=wop/rReq;
+    return {rReq,wnReq,ksReq:v.M*wnReq*wnReq/v.N/1e3,dst:G/(wnReq*wnReq),wop,T};
+  },
+  compute(v){
+    const D=this.design(v),{M,N,z}=v,wop=D.wop,ktot=N*v.ks*1e3,wn=Math.sqrt(ktot/M),r=wop/wn,TR=trans(r,z),iso=(1-TR)*100;
+    const c=2*z*Math.sqrt(ktot*M),me=v.m0e/1e3,Fu=me*wop*wop,FT=Fu*TR,X=me/M*r*r*amp(r,z);
+    const tr=v.tr,tf=tr+Math.max(1.5,0.5*tr),n=2000;
+    const om=t=>wop*Math.min(1,t/tr),th=t=>t<tr?wop*t*t/(2*tr):wop*(tr/2+(t-tr));
+    const s=rk4((t,y)=>{const w=om(t);return [y[1],(me*w*w*Math.sin(th(t))-c*y[1]-ktot*y[0])/M];},[0,0],tf,n,subFor(Math.max(wn,wop),tf,n));
+    const t=s.t,x=toMM(s.y[0]),fx=mapArr(t,(tt,i)=>ktot*s.y[0][i]+c*s.y[1][i]);
+    const fop=wop/TAU,fr=linspace(fop*0.01,fop*2,800),TRc=mapArr(fr,f=>trans(f*TAU/wn,z));
+    const ok=iso>=v.iso,amplifies=r<Math.SQRT2;
+    const tRes=wn<wop?tr*wn/wop:NaN,A=Math.max(absMax(x),1e-9),FTm=Math.max(absMax(fx),1e-9);
+    return {tf,
+      readouts:[{label:'Verificación',pill:amplifies?'Amplifica: r < √2':ok?'Cumple el requisito':'No cumple el requisito',tone:amplifies?'crit':ok?'ok':'warn',
+          note:isFinite(D.ksReq)?`rigidez recomendada por soporte ≤ ${fmt(D.ksReq,4)} N/mm`:'requisito no alcanzable con este amortiguamiento'},
+        ro('Razón requerida','r<sub>req</sub>',D.rReq,''),ro('f<sub>n</sub> máxima permitida','f<sub>n,req</sub>',D.wnReq/TAU,'Hz'),ro('Deflexión estática mínima','δ<sub>st,req</sub>',D.dst*1e3,'mm'),
+        ro('Frecuencia natural real','f<sub>n</sub>',wn/TAU,'Hz'),ro('Razón de frecuencias','r',r,''),ro('Transmisibilidad','T',TR,''),ro('Aislamiento logrado','',iso,'%'),
+        ro('Deflexión estática','δ<sub>st</sub>',M*G/ktot*1e3,'mm'),ro('Fuerza de desbalance','m<sub>0</sub>eω²',Fu,'N'),ro('Fuerza transmitida','F<sub>T</sub>',FT,'N'),ro('Amplitud en operación','X',X*1e3,'mm')],
+      plots:[{xRange:[0,fop*2],series:[{x:fr,y:TRc,color:'accent',width:2.2,label:`T con ζ = ${z}`}],hlines:[{y:D.T,color:'s2',label:`T requerida ${fmt(D.T,3)}`},{y:1}],
+          vlines:[{x:fop,color:'s2',label:'operación'},{x:wn/TAU,color:'accent',label:'fₙ',row:1}],markers:[{x:fop,y:TR,color:'s2'}]},
+        {series:[{x:t,y:x,color:'accent',width:1.4,label:'x(t)'}],vlines:isFinite(tRes)?[{x:tRes,color:'crit',label:'ω = ωₙ'},{x:tr,label:'fin del arranque',row:1}]:[{x:tr,label:'fin del arranque'}]}],
+      csv:{head:['t [s]','x [mm]','F_T [N]'],cols:[t,x,fx]},
+      cursor:tt=>[null,{x:tt,pts:[{x:tt,y:interp(x,tt,tf)}]}],
+      scene:(cv,tt)=>drawVerticalMachine(cv,{xmm:interp(x,tt,tf),maxmm:A,N,damped:z>0,theta:th(tt),ft:interp(fx,tt,tf)/FTm,note:`n = ${fmt(om(tt)*60/TAU,4)} rpm`})};
+  }
+};
+
+MODS.absorbedor={
+  nav:'Absorbedor dinámico',title:'Absorbedor dinámico de vibraciones',
+  lead:'Una masa auxiliar mₐ con resorte kₐ se agrega a la estructura. Sintonizado y sin amortiguamiento anula la vibración de la masa principal a una sola frecuencia; con amortiguamiento óptimo (Den Hartog) reduce el pico en una banda amplia.',
+  eq:[String.raw`\mu=\frac{m_a}{m},\qquad f=\frac{\omega_a}{\omega_n},\qquad \omega_a=\sqrt{k_a/m_a}`,
+      String.raw`f_{opt}=\frac{1}{1+\mu},\qquad \zeta_{a,opt}=\sqrt{\frac{3\mu}{8(1+\mu)^{3}}}`,
+      String.raw`r^{4}-r^{2}\left[1+f^{2}(1+\mu)\right]+f^{2}=0`],
+  hint:'pulsa “Sintonizar a la operación” con r = 1: la masa principal queda quieta. Mueve r un poco y aparecen dos picos nuevos. El óptimo de Den Hartog los iguala.',
+  params:[{group:'Estructura principal'},
+    {key:'m',sym:'m',label:'Masa principal',unit:'kg',min:0.5,max:50,step:0.5,val:1},
+    {key:'k',sym:'k',label:'Rigidez principal',unit:'N/m',min:10,max:5000,step:1,val:40},
+    {key:'z1',sym:'ζ',label:'Amortiguamiento principal',unit:'',min:0,max:0.2,step:0.005,val:0},
+    {group:'Absorbedor'},
+    {key:'mu',sym:'μ',label:'Razón de masas mₐ/m',unit:'',min:0.01,max:0.5,step:0.01,val:0.1},
+    {key:'f',sym:'f',label:'Sintonía ωₐ/ωₙ',unit:'',min:0.5,max:1.5,step:0.001,val:1},
+    {key:'za',sym:'ζ<sub>a</sub>',label:'Amortiguamiento del absorbedor',unit:'',min:0,max:0.5,step:0.001,val:0},
+    {group:'Excitación'},
+    {key:'F0',sym:'F<sub>0</sub>',label:'Amplitud de fuerza',unit:'N',min:0.1,max:10,step:0.1,val:0.5},
+    {key:'r',sym:'r',label:'Razón de frecuencias ω/ω<sub>n</sub>',unit:'',min:0.3,max:2,step:0.005,val:1},...tfP(30)],
+  actions:[{label:'Sintonizar a la operación',run:M=>{M.set('f',M.v.r);M.set('za',0);}},
+    {label:'Óptimo de Den Hartog',run:M=>{const mu=M.v.mu;M.set('f',+(1/(1+mu)).toFixed(3));M.set('za',+Math.sqrt(3*mu/(8*(1+mu)**3)).toFixed(3));}}],
+  plots:[{title:'Respuesta en frecuencia de la masa principal',xLabel:'r = ω/ωₙ',yLabel:'X₁/δst',full:true},{title:'Respuesta en el tiempo',xLabel:'t [s]',yLabel:'x [mm]',full:true}],
+  compute(v){
+    const {m,k,z1,mu,f,za,F0,r,tf}=v,wn=Math.sqrt(k/m),ma=mu*m,wa=f*wn,ka=ma*wa*wa,ca=2*za*ma*wn,c1=2*z1*m*wn,w=r*wn,dst=F0/k;
+    const resp=q=>{const o=q*wn,re11=k+ka-m*o*o,im11=o*(c1+ca),re12=-ka,im12=-o*ca,re22=ka-ma*o*o,im22=o*ca;
+      const dRe=re11*re22-im11*im22-(re12*re12-im12*im12),dIm=re11*im22+im11*re22-2*re12*im12,d2=dRe*dRe+dIm*dIm;
+      const x1Re=(re22*dRe+im22*dIm)/d2,x1Im=(im22*dRe-re22*dIm)/d2,x2Re=-(re12*dRe+im12*dIm)/d2,x2Im=-(im12*dRe-re12*dIm)/d2;
+      return {X1:Math.hypot(x1Re,x1Im),st:Math.hypot(x2Re-x1Re,x2Im-x1Im)};};
+    const rr=linspace(0.3,2,1200),W=mapArr(rr,q=>resp(q).X1*k),Wo=mapArr(rr,q=>amp(q,z1));
+    const pk=Math.max(...[...W].filter(isFinite)),cap=Math.min(25,Math.max(4,pk*1.4));
+    const now=resp(r),X1=now.X1*F0,X1o=dst*amp(r,z1),stroke=now.st*F0;
+    const b=1+f*f*(1+mu),dsc=Math.sqrt(Math.max(0,b*b-4*f*f)),rn1=Math.sqrt((b-dsc)/2),rn2=Math.sqrt((b+dsc)/2);
+    const fo=1/(1+mu),zo=Math.sqrt(3*mu/(8*(1+mu)**3));
+    const n=1500,s=rk4((t,y)=>{const F=F0*Math.sin(w*t),[x1,x2,u1,u2]=y;return [u1,u2,(F-c1*u1-ca*(u1-u2)-k*x1-ka*(x1-x2))/m,(-ca*(u2-u1)-ka*(x2-x1))/ma];},[0,0,0,0],tf,n,subFor(Math.max(wn*rn2,w),tf,n));
+    const t=s.t,x1=toMM(s.y[0]),x2=toMM(s.y[1]),A=Math.max(absMax(x1,x2),1e-9);
+    const tuned=za<1e-6&&Math.abs(r-f)<0.006,opt=Math.abs(f-fo)<0.01&&Math.abs(za-zo)<0.01;
+    return {tf,
+      readouts:[{label:'Diseño',pill:tuned?'Sintonizado: antirresonancia en la operación':opt?'Óptimo de Den Hartog':'Absorbedor genérico',tone:tuned||opt?'ok':'info',
+          note:`óptimo para μ = ${mu}: f = ${fmt(fo,4)}, ζₐ = ${fmt(zo,3)}`},
+        ro('Frecuencia del absorbedor','ω<sub>a</sub>',wa,'rad/s'),ro('Rigidez del absorbedor','k<sub>a</sub>',ka,'N/m'),ro('Amortiguador','c<sub>a</sub>',ca,'N·s/m'),
+        ro('X₁ sin absorbedor','X<sub>1,0</sub>',X1o*1e3,'mm'),ro('X₁ con absorbedor','X<sub>1</sub>',X1*1e3,'mm'),
+        ro('Reducción','',isFinite(X1o)?(1-X1/X1o)*100:NaN,'%'),ro('Carrera del absorbedor','|X<sub>2</sub>−X<sub>1</sub>|',stroke*1e3,'mm'),
+        ro('Nuevas frecuencias (sin amort.)','r<sub>1</sub> · r<sub>2</sub>',`${fmt(rn1,3)} · ${fmt(rn2,3)}`,''),ro('Pico de la respuesta','(X<sub>1</sub>/δ<sub>st</sub>)<sub>máx</sub>',pk,'')],
+      plots:[{xRange:[0.3,2],yRange:[0,cap],series:[{x:rr,y:Wo,color:'muted',dash:true,width:1.5,label:'sin absorbedor'},{x:rr,y:W,color:'accent',width:2.2,label:'con absorbedor'}],
+          vlines:[{x:rn1,color:'s3',label:'r₁'},{x:rn2,color:'s3',label:'r₂'}],markers:[{x:r,y:Math.min(X1/dst,cap*0.98),color:'s2',label:`r = ${r}`}]},
+        {series:[{x:t,y:x1,color:'accent',width:2,label:'x₁ masa principal'},{x:t,y:x2,color:'s4',width:1.4,alpha:.9,label:'x₂ absorbedor'}]}],
+      csv:{head:['t [s]','x1 [mm]','x2 [mm]'],cols:[t,x1,x2]},
+      cursor:tt=>[null,{x:tt,pts:[{x:tt,y:interp(x1,tt,tf)},{x:tt,y:interp(x2,tt,tf),color:'s4'}]}],
+      scene:(cv,tt)=>draw2DOF(cv,{x1:interp(x1,tt,tf),x2:interp(x2,tt,tf),maxmm:A,k1:k,c1,k2:ka,c2:ca,k3:0,labels:['m','mₐ'],fill2:'s4',force:Math.sin(w*tt)})};
+  }
+};
+
+MODS.continuos={
+  nav:'Cuerdas, barras, ejes y vigas',title:'Vibración de sistemas continuos',
+  lead:'En un sistema continuo la masa y la rigidez están distribuidas: hay infinitas frecuencias naturales, cada una con su forma modal. Las condiciones de borde fijan los números de onda.',
+  eq:[String.raw`\text{cuerda: }\ \omega_j=\frac{j\pi}{L}\sqrt{\frac{T}{\rho_L}}\qquad \text{barra: }\ \omega_j=\beta_j\sqrt{\frac{E}{\rho}}\qquad \text{eje: }\ \omega_j=\beta_j\sqrt{\frac{G}{\rho}}`,
+      String.raw`\text{viga: }\ EI\frac{\partial^{4}w}{\partial x^{4}}+\rho A\frac{\partial^{2}w}{\partial t^{2}}=0,\qquad \omega_j=(\beta_jL)^{2}\sqrt{\frac{EI}{\rho A L^{4}}}`],
+  hint:'compara la viga en voladizo con la empotrada–empotrada: f₂/f₁ vale 6.27 y 2.76. En la cuerda los armónicos son múltiplos enteros; en la viga no.',
+  params:[{group:'Sistema'},
+    {key:'sis',type:'select',label:'Tipo',options:[['cuerda','Cuerda tensa'],['barra','Barra en vibración axial'],['eje','Eje en vibración torsional'],['viga','Viga en flexión (Euler–Bernoulli)']],val:'viga'},
+    {key:'cc',type:'select',label:'Condiciones de borde',val:'voladizo',
+      options:v=>v.sis==='cuerda'?[['ff','Fija – fija']]:v.sis==='viga'?Object.entries(BEAM).map(([k,b])=>[k,b.n]):Object.entries(ROD).map(([k,b])=>[k,b.n])},
+    {key:'mat',type:'select',label:'Material',options:matOpts,val:'acero',dep:v=>v.sis!=='cuerda'},
+    {key:'sec',type:'select',label:'Sección',options:[['rect','Rectangular b × h'],['circ','Circular de diámetro d']],val:'rect',dep:v=>v.sis==='viga'||v.sis==='barra'},
+    {group:'Geometría'},
+    {key:'L',sym:'L',label:'Longitud',unit:'m',min:0.1,max:5,step:0.01,val:1},
+    {key:'b',sym:'b',label:'Ancho',unit:'mm',min:2,max:200,step:1,val:40,dep:v=>(v.sis==='viga'||v.sis==='barra')&&v.sec==='rect'},
+    {key:'h',sym:'h',label:'Espesor',unit:'mm',min:1,max:100,step:0.5,val:10,dep:v=>(v.sis==='viga'||v.sis==='barra')&&v.sec==='rect'},
+    {key:'d',sym:'d',label:'Diámetro',unit:'mm',min:2,max:200,step:1,val:20,dep:v=>v.sis==='eje'||((v.sis==='viga'||v.sis==='barra')&&v.sec==='circ')},
+    {key:'T',sym:'T',label:'Tensión',unit:'N',min:1,max:2000,step:1,val:100,dep:v=>v.sis==='cuerda'},
+    {key:'rl',sym:'ρ<sub>L</sub>',label:'Masa por unidad de longitud',unit:'g/m',min:0.1,max:100,step:0.1,val:5,dep:v=>v.sis==='cuerda'},
+    {group:'Visualización'},
+    {key:'j',sym:'j',label:'Modo animado',unit:'',min:1,max:5,step:1,val:1}],
+  plots:[{title:'Forma modal',xLabel:'x / L',yLabel:'φ normalizada'},{title:'Primeras cinco frecuencias naturales',xLabel:'modo j',yLabel:'fⱼ [Hz]'}],
+  compute(v){
+    const sis=v.sis,j=v.j,L=v.L,M=MAT[v.mat],xi=linspace(0,1,201);
+    let freqs=[],phi,ends,extra=[],mass;
+    if(sis==='cuerda'){const rl=v.rl/1e3,c=Math.sqrt(v.T/rl);for(let q=1;q<=5;q++)freqs.push(q*Math.PI/L*c/TAU);phi=mapArr(xi,u=>Math.sin(j*Math.PI*u));ends=['pin','pin'];mass=rl*L;
+      extra=[ro('Velocidad de onda','c = √(T/ρ<sub>L</sub>)',c,'m/s')];}
+    else if(sis==='barra'||sis==='eje'){const R=ROD[v.cc]||ROD.fl,c=Math.sqrt((sis==='barra'?M.E:M.G)/M.rho);
+      for(let q=1;q<=5;q++)freqs.push(R.k(q)/L*c/TAU);phi=peakNormalize(mapArr(xi,u=>R.phi(R.k(j)*u)));ends=R.ends;
+      const A=sis==='eje'?Math.PI*(v.d/1e3)**2/4:section(v).A;mass=M.rho*A*L;
+      extra=[ro('Velocidad de onda',sis==='barra'?'c = √(E/ρ)':'c = √(G/ρ)',c,'m/s')];}
+    else{const B=BEAM[v.cc]||BEAM.voladizo,S=section(v),k0=Math.sqrt(M.E*S.I/(M.rho*S.A*L**4));
+      for(let q=1;q<=5;q++)freqs.push(B.bl(q)**2*k0/TAU);const bl=B.bl(j);phi=peakNormalize(mapArr(xi,u=>B.phi(bl*u,bl)));ends=B.ends;mass=M.rho*S.A*L;
+      extra=[ro('Número de onda','β<sub>j</sub>L',bl,''),ro('Momento de inercia','I',S.I*1e12,'mm⁴')];}
+    const fj=freqs[j-1],fv=0.8,ratios=freqs.map(f=>fmt(f/freqs[0],3)).join(' · ');
+    const jj=Float64Array.from([1,2,3,4,5]),ff=Float64Array.from(freqs);
+    return {tf:4/fv,
+      readouts:[{label:'Modo',pill:`Modo ${j}`,tone:'info',note:`${countNodes(phi)} nodos internos`},
+        ro('Frecuencia natural','f<sub>j</sub>',fj,'Hz'),ro('Frecuencia natural','ω<sub>j</sub>',fj*TAU,'rad/s'),ro('Fundamental','f<sub>1</sub>',freqs[0],'Hz'),
+        ...extra,ro('Masa total','m',mass,'kg'),ro('Razones f<sub>j</sub>/f<sub>1</sub>','',ratios,'',{wide:true})],
+      plots:[{xRange:[0,1],yRange:[-1.25,1.25],series:[{x:xi,y:phi,color:'accent',width:2.4,label:`modo ${j}`}],hlines:[{y:0}]},
+        {xRange:[0.5,5.5],xTicks:[1,2,3,4,5],yZero:true,series:[{x:jj,y:ff,color:'accent',stem:true,label:'fⱼ'}],markers:[{x:j,y:fj,color:'s2',label:`${fmt(fj,4)} Hz`}]}],
+      cursor:()=>[null,null],
+      scene:(cv,tt)=>drawContinuum(cv,{sis,ends,phi,phase:TAU*fv*tt,note:`f${subn(j)} = ${fmt(fj,4)} Hz · animación a velocidad visual`})};
+  }
+};
+
+/* ---------- syllabus ---------- */
+const UNITS=[
+  {name:'Fundamentos',mods:['armonico','fourier','elasticos']},
+  {name:'Vibración libre',mods:['libre','coulomb','amortiguamiento']},
+  {name:'Excitación armónica',mods:['forzada','base','desbalance','instrumentos']},
+  {name:'Excitación general',mods:['pulsos','periodica']},
+  {name:'Varios grados de libertad',mods:['2gdl','ngdl']},
+  {name:'Control de vibraciones',mods:['aislamiento','absorbedor']},
+  {name:'Sistemas continuos',mods:['continuos']},
+];
+const ORDER=[];UNITS.forEach((u,ui)=>u.mods.forEach((id,mi)=>{const M=MODS[id];M.id=id;M.num=`${ui+1}.${mi+1}`;M.unit=u.name;ORDER.push(M);}));
+
+/* ---------- MathJax ---------- */
+function typeset(el){
+  if(el.dataset.mj)return;el.dataset.mj='1';
+  if(window.MathJax&&typeof MathJax.typesetPromise==='function'&&MathJax.startup&&MathJax.startup.document)MathJax.typesetPromise([el]).catch(()=>{});
+  else window.MJ_PENDING.push(el);
+}
+
+/* ---------- animation state ---------- */
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const anim={playing:!reduce,t:0,speed:1,last:null};
+const SPEEDS=[0.1,0.25,0.5,1,2];
+let active=null;
+function syncPlaybars(){
+  document.querySelectorAll('.play').forEach(b=>{b.textContent=anim.playing?'Pausar':'Reproducir';b.setAttribute('aria-pressed',String(anim.playing));});
+  document.querySelectorAll('.speed select').forEach(s=>{s.value=String(anim.speed);});
+}
+
+/* ---------- build ---------- */
+const host=$('#modules'),side=$('#side'),pick=$('#modpick');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const optsFor=(p,v)=>typeof p.options==='function'?p.options(v):p.options;
+function buildModule(M,idx){
+  const sec=document.createElement('section');sec.className='module';sec.id='m-'+M.id;sec.hidden=true;sec.setAttribute('aria-labelledby','h-'+M.id);
+  const prev=ORDER[idx-1],next=ORDER[idx+1];
+  sec.innerHTML=`<header class="mod-head"><p class="eyebrow">${M.num} · ${M.unit}</p><h2 id="h-${M.id}">${M.title}</h2><p class="lead">${M.lead}</p></header>
+  <div class="mod-grid">
+    <aside class="panel controls" aria-label="Parámetros">
+      <div class="eq">${M.eq.map(e=>`<div class="tex">\\[${esc(e)}\\]</div>`).join('')}</div>
+      <div class="params"></div>
+      ${M.actions?`<div class="btnrow">${M.actions.map((a,i)=>`<button type="button" class="btn ghost" data-act="${i}">${a.label}</button>`).join('')}</div>`:''}
+      <p class="hint"><b>Explora</b>${M.hint}</p>
+    </aside>
+    <div class="main">
+      <div class="panel scene-card">
+        <div class="scene-wrap"><canvas class="scene" role="img" aria-label="Animación del sistema"></canvas></div>
+        <div class="playbar">
+          <button class="btn play" type="button"></button>
+          <button class="btn ghost restart" type="button">Reiniciar</button>
+          <label class="speed" for="${M.id}-speed">Velocidad <select id="${M.id}-speed">${SPEEDS.map(s=>`<option value="${s}">${s}×</option>`).join('')}</select></label>
+          <span class="tclock">t = 0.00 s</span>
+          <button class="btn ghost copy" type="button">Copiar datos CSV</button>
+        </div>
+      </div>
+      <div class="datarow" hidden><button class="btn ghost copy" type="button">Copiar datos CSV</button></div>
+      <div class="panel readouts"></div>
+      <div class="plots"></div>
+      <div class="pager">${prev?`<button type="button" class="btn ghost" data-go="${prev.id}">← ${prev.num} ${prev.nav}</button>`:'<span></span>'}${next?`<button type="button" class="btn ghost" data-go="${next.id}">${next.num} ${next.nav} →</button>`:''}</div>
+    </div>
+  </div>`;
+  host.appendChild(sec);M.el=sec;M.cv=$('.scene',sec);M.clock=$('.tclock',sec);M.sceneCard=$('.scene-card',sec);M.datarow=$('.datarow',sec);
+  const box=$('.params',sec);M.v={};M.inputs={};M.rows={};
+  for(const p of M.params){
+    if(p.group){const g=document.createElement('p');g.className='pgroup';g.textContent=p.group;box.appendChild(g);continue;}
+    const id=`${M.id}-${p.key}`;M.v[p.key]=p.val;
+    const row=document.createElement('div');row.className='param';M.rows[p.key]=row;
+    if(p.type==='bool'){
+      row.classList.add('bool');row.innerHTML=`<label for="${id}"><input type="checkbox" id="${id}" ${p.val?'checked':''}>${p.label}</label>`;
+      const cb=$('input',row);cb.addEventListener('change',()=>{M.v[p.key]=cb.checked;refresh(M);queue(M);});
+      M.inputs[p.key]={set:x=>{cb.checked=!!x;}};
+    } else if(p.type==='select'){
+      row.classList.add('sel');row.innerHTML=`<label for="${id}">${p.label}</label><select id="${id}"></select>`;
+      const se=$('select',row);se.addEventListener('change',()=>{M.v[p.key]=se.value;refresh(M);queue(M);});
+      M.inputs[p.key]={set:x=>{se.value=x;},el:se};
+    } else {
+      row.innerHTML=`<label for="${id}">${p.sym?`<span class="sym">${p.sym}</span>`:''}<span class="pl">${p.label}</span></label>
+        <span class="num"><input type="number" id="${id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.val}" inputmode="decimal"><span class="unit-l">${p.unit}</span></span>
+        <input type="range" id="${id}-r" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.val}" aria-label="${p.label.replace(/<[^>]+>/g,'')}">`;
+      const num=$('input[type=number]',row),rng=$('input[type=range]',row);
+      rng.addEventListener('input',()=>{const x=+rng.value;num.value=x;M.v[p.key]=x;queue(M);});
+      num.addEventListener('input',()=>{let x=parseFloat(num.value);if(!isFinite(x))return;x=Math.min(p.max,Math.max(p.min,x));rng.value=x;M.v[p.key]=x;queue(M);});
+      num.addEventListener('change',()=>{num.value=M.v[p.key];});
+      M.inputs[p.key]={set:x=>{num.value=x;rng.value=x;}};
+    }
+    box.appendChild(row);
+  }
+  M.set=(k,x)=>{M.v[k]=x;M.inputs[k].set(x);refresh(M);queue(M);};
+  refresh(M);
+  const pbox=$('.plots',sec);M.plotObjs=M.plots.map(o=>{const d=document.createElement('div');pbox.appendChild(d);return new Plot(d,o);});
+  $('.play',sec).addEventListener('click',()=>{anim.playing=!anim.playing;anim.last=null;syncPlaybars();M.dirty=true;});
+  $('.restart',sec).addEventListener('click',()=>{anim.t=0;M.dirty=true;});
+  $('.speed select',sec).addEventListener('change',e=>{anim.speed=+e.target.value;syncPlaybars();});
+  sec.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',e=>copyCSV(M,e.currentTarget)));
+  sec.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>{M.actions[+b.dataset.act].run(M);anim.t=0;queue(M);}));
+  sec.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{activate(b.dataset.go);window.scrollTo({top:0});}));
+}
+function refresh(M){
+  for(const p of M.params){
+    if(!p.key)continue;const row=M.rows[p.key];
+    if(p.type==='select'){const opts=optsFor(p,M.v),se=M.inputs[p.key].el,sig=opts.map(o=>o[0]).join('|');
+      if(se.dataset.sig!==sig){se.innerHTML=opts.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');se.dataset.sig=sig;}
+      if(!opts.some(o=>o[0]===M.v[p.key]))M.v[p.key]=opts[0][0];se.value=M.v[p.key];}
+    if(p.dep){const on=!!p.dep(M.v);row.classList.toggle('off',!on);row.querySelectorAll('input,select').forEach(i=>i.disabled=!on);}
+  }
+}
+function queue(M){if(M.pending)return;M.pending=true;requestAnimationFrame(()=>{M.pending=false;recompute(M);});}
+function recompute(M){
+  try{M.res=M.compute(M.v);}catch(err){console.error(err);return;}
+  const R=M.res;
+  if(R.tf&&anim.t>R.tf)anim.t=0;
+  M.sceneCard.hidden=!R.scene;M.datarow.hidden=!!R.scene||!R.csv;
+  M.sceneCard.querySelectorAll('.copy').forEach(b=>b.hidden=!R.csv);
+  $('.readouts',M.el).innerHTML=R.readouts.map(r=>r.pill
+    ?`<div class="ro-state"><span class="rl">${r.label}</span><span class="chip" data-tone="${r.tone}">${r.pill}</span>${r.note?`<span class="chip-note">${r.note}</span>`:''}</div>`
+    :`<div class="ro${r.wide?' wide':''}"><span class="rl">${r.sym?`<span class="sym">${r.sym}</span>`:''}${r.label}</span><span class="rv">${typeof r.v==='string'?r.v:fmt(r.v)}${r.u?`<small>${r.u}</small>`:''}</span></div>`).join('');
+  R.plots.forEach((d,i)=>M.plotObjs[i].set(d));
+  if(!R.scene)M.plotObjs.forEach(p=>p.cursor(null));
+  M.dirty=true;
+}
+function render(M){
+  const R=M.res;if(!R||!R.scene)return;
+  const t=Math.min(anim.t,R.tf);
+  R.scene(M.cv,t);
+  const cs=R.cursor?R.cursor(t,R.tf):[];M.plotObjs.forEach((p,i)=>p.cursor(cs[i]||null));
+  M.clock.textContent=`t = ${t.toFixed(2)} s / ${fmt(R.tf,3)} s`;
+}
+function activate(id){
+  const M=MODS[id]||ORDER[0];
+  ORDER.forEach(m=>{const on=m===M;m.el.hidden=!on;m.navEl.setAttribute('aria-current',on?'page':'false');});
+  pick.value=M.id;active=M;anim.t=0;
+  typeset($('.eq',M.el));
+  if(!M.res)recompute(M);else{M.plotObjs.forEach(p=>p.draw());M.dirty=true;}
+  try{history.replaceState(null,'','#'+M.id);}catch(e){}
+}
+UNITS.forEach((u,ui)=>{
+  const g=document.createElement('div');g.className='unit';g.innerHTML=`<h2>Unidad ${ui+1} · <b>${u.name}</b></h2>`;
+  const og=document.createElement('optgroup');og.label=`Unidad ${ui+1} · ${u.name}`;
+  u.mods.forEach(id=>{const M=MODS[id];
+    const b=document.createElement('button');b.type='button';b.className='navbtn';b.innerHTML=`<span class="n">${M.num}</span><span>${M.nav}</span>`;
+    b.addEventListener('click',()=>{activate(id);window.scrollTo({top:0});});g.appendChild(b);M.navEl=b;
+    const o=document.createElement('option');o.value=id;o.textContent=`${M.num}  ${M.nav}`;og.appendChild(o);});
+  side.appendChild(g);pick.appendChild(og);
+});
+pick.addEventListener('change',()=>{activate(pick.value);window.scrollTo({top:0});});
+
+/* ---------- CSV copy ---------- */
+function copyCSV(M,btn){
+  const {head,cols}=M.res.csv;const lines=[head.join(',')];
+  for(let i=0;i<cols[0].length;i++)lines.push(cols.map(c=>isFinite(c[i])?(+c[i].toFixed(6)):'').join(','));
+  const text=lines.join('\n');
+  const show=()=>{const box=$('#copybox'),ta=$('#copytext');ta.value=text;box.hidden=false;ta.focus();ta.select();};
+  const old=btn.textContent;
+  try{navigator.clipboard.writeText(text).then(()=>{btn.textContent='Copiado';setTimeout(()=>btn.textContent=old,1400);},show);}catch(e){show();}
+}
+$('#copyclose').addEventListener('click',()=>{$('#copybox').hidden=true;});
+
+/* ---------- loop ---------- */
+function frame(ts){
+  const M=active;
+  if(M&&M.res&&M.res.scene){
+    if(anim.last==null)anim.last=ts;
+    const dt=Math.min(0.05,(ts-anim.last)/1000);anim.last=ts;
+    if(anim.playing){anim.t+=dt*anim.speed;if(anim.t>M.res.tf)anim.t%=M.res.tf;}
+    if(anim.playing||M.dirty){render(M);M.dirty=false;}
+  } else anim.last=null;
+  requestAnimationFrame(frame);
+}
+
+/* ---------- theme / layout ---------- */
+function onTheme(){readTheme();if(active){active.plotObjs.forEach(p=>p.draw());active.dirty=true;}}
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',onTheme);
+new MutationObserver(onTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+new ResizeObserver(()=>{document.documentElement.style.setProperty('--topbar',$('#topbar').offsetHeight+'px');}).observe($('#topbar'));
+
+/* ---------- init ---------- */
+readTheme();
+ORDER.forEach(buildModule);
+syncPlaybars();
+const h0=(location.hash||'').slice(1);
+activate(MODS[h0]?h0:ORDER[0].id);
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(MODS[h]&&MODS[h]!==active)activate(h);});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(active){active.plotObjs.forEach(p=>p.draw());active.dirty=true;}});
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
